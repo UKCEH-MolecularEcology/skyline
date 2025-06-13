@@ -111,7 +111,7 @@ rule extract_16S:
         rules.cat_ass_16S.output.cat_fa
     output:
         ext_fa=os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa"),
-        map_fa=os.path.join(RESULTS_DIR, "extracted/extracted_map.fa")
+        map_fa=os.path.join(RESULTS_DIR, "extracted/extracted_map.txt")
 #    conda:
 #        os.path.join(ENV_DIR, "perl.yaml")
     log:
