@@ -1,0 +1,3 @@
+[submodule "submodules/hyperex"]
+	path = submodules/hyperex
+	url = https://github.com/Ebedthan/hyperex.git
