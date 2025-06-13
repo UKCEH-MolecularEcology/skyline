@@ -94,14 +94,15 @@ rule trim_16S:
     log:
         os.path.join(RESULTS_DIR, "logs/hyperex/extracting_16S.log")
     params:
-        src=config["hyperex"]["bin"],
+        path=config["hyperex"]["path"],
         fwd=config["hyperex"]["fwd"],
         rev=config["hyperex"]["rev"]
+    threads:
+        16
     message:
         "hyperex run to trim the 16S sequences from the concatenated assemblies"
     shell:
-        "(date && "
-        "{params.src} -p $(basename -s '.fa' {output.ext_fa}) --forward-primer {params.fwd} --reverse-primer {params.rev} {input} && "
+        "(date && export PATH={params.path}:$PATH && "
+        "hyperex -p $(basename -s '.fa' {output.ext_fa}) --forward-primer {params.fwd} --reverse-primer {params.rev} {input} && "
         "date) &> >(tee {log})"
-
 

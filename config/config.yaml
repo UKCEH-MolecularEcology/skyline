@@ -38,8 +38,8 @@ metadata: "data" # USER_INPUT
 # TOOLS & DATA(BASES)
 # Trimming 16S
 hyperex:
-  path: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex_install/bin"
-  bin: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex_install/bin/hyperex"
+  path: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex/bin"
+  bin: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex/bin/hyperex"
   fwd: "GTGYCAGCMGCCGCGGTAA"  # 515F, V4
   rev: "GGACTACNVGGGTWTCTAAT" # 806R, V4
 
