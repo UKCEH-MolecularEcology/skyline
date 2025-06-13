@@ -53,7 +53,7 @@ rule cluster_otus:
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     shell:
-        "(date && mkdir -p {os.path.dirname(output.otus)} && "
+        "(date && mkdir -p $(dirname {output.otus}) && "
         "vsearch --cluster_fast {input} --id {float(wildcards.id) / 100} --centroids {output.otus} --uc {output.uc} && "
         "date) &> >(tee {log})"
 
