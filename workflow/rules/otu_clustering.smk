@@ -48,13 +48,15 @@ rule cluster_otus:
         os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}.log")        
     message:
         "Cluster OTUs at percentage: {wildcards.id}"
+    params:
+        id=lambda wildcards: float(wildcards.id)/100
     envmodules:
         "vsearch/2.11.1"
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     shell:
         "(date && mkdir -p $(dirname {output.otus}) && "
-        "vsearch --cluster_fast {input} --id {float(wildcards.id) / 100} --centroids {output.otus} --uc {output.uc} && "
+        "vsearch --cluster_fast {input} --id {params.id} --centroids {output.otus} --uc {output.uc} && "
         "date) &> >(tee {log})"
 
 # OTU table
