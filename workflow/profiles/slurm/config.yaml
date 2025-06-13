@@ -1,0 +1,52 @@
+# config for execution on HPC cluster using slurm
+
+# NOTE: change all parameters with the tag "USER_INPUT" !!!
+
+# main workflow snakemake file
+snakefile: "workflow/Snakefile"
+
+# total number of cores and jobs
+cores: 8
+jobs: 5
+# for local rules: use at most N cores of the host machine in parallel
+local-cores: 1
+
+# config file(s)
+configfile:
+  - "config/config.yaml" # USER_INPUT (in general, it should not be changed)
+
+# resources
+default-resources:
+  # tmp directory
+  - tmpdir="/tmp" # USER_INPUT
+  - partition="ei-medium,ei-long" # USER_INPUT
+  - mem_mb=1000
+  - slurm_account=tgac
+  - exclude="n83029" # USER_INPUT
+
+# go on with independent jobs if a job fails
+keep-going: True
+# re-run all jobs the output of which is recognized as incomplete
+rerun-incomplete: True
+# print the reason for each executed rule
+reason: True
+# print out the shell commands that will be executed
+printshellcmds: True
+# conda
+use-conda: True
+conda-prefix: "/hpc-home/kar23heg/conda_envs/decode" # USER_INPUT
+# wait given seconds if an output file of a job is not present after the job finished
+latency-wait: 60
+
+# number of times to restart failing jobs
+restart-times: 0
+# execute snakemake rules with the given submit command
+cluster: "sbatch -p {cluster.partition} -q {cluster.qos} -N 1 -n 1 -c {threads} -t {cluster.time} -J {cluster.job-name}"
+# slurm config (ABSOLUTE PATH !!!)
+cluster-config: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/workflow/profiles/slurm/slurm.yaml" # USER_INPUT
+# max. number of cluster/drmaa jobs per second
+max-jobs-per-second: 1
+# max. number of job status checks per second
+max-status-checks-per-second: 10
+# trigger for rerunning jobs
+rerun-trigger: "mtime"

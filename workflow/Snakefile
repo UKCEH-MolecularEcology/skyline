@@ -1,0 +1,55 @@
+"""
+Author: Susheel Bhanu BUSI
+Affiliation: Molecular Ecology group, UKCEH
+Date: [2026-06-09]
+Run: snakemake -s workflow/Snakefile --configfile config/config.yaml --use-conda --cores 4 -rp
+Latest modification:
+Purpose: Running metagenomic analyses for the DECODE project
+"""
+
+
+##############################
+# MODULES
+import os
+import re
+import glob
+import pandas as pd
+
+# importing specific scripts for parsing etc.
+# from scripts.utils import find_fast5, assembler_pairs
+
+
+##############################
+# CONFIG
+include:
+    "rules/init.smk"
+
+
+##############################
+# TARGETS & RULES
+# List of (main) targets to be created
+TARGETS = []
+
+# Include rules and add targets based on the config file
+#include:
+#    "rules/setup.smk"
+#include:
+#    "rules/databases.smk"
+
+# PROFILE
+if "extract" in config["steps"]:
+    include:
+        "rules/extract_16S.smk"
+    TARGETS += [
+        "status/extract_16S.done"
+    ]
+
+
+# No targets
+if len(TARGETS) == 0:
+    raise Exception('You are not serious. Nothing to be done? Really?')
+
+rule all:
+    input:
+        TARGETS
+
