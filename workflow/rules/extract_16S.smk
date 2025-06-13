@@ -18,7 +18,7 @@ rule extract_16S_all:
     input:
         expand(f"{RESULTS_DIR}/{{sample}}/{{sample}}_16S_seqs.fa", sample=SAMPLES),
         "submodules/hyperex_installed.txt",
-        os.path.join(RESULTS_DIR, "hyperex/extracted_16S.fa")
+        os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa")
     output:
         touch("status/extract_16S.done")        
 
@@ -84,7 +84,7 @@ rule install_hyperex:
         touch {output}
         """
 
-rule trim_16S:
+rule hyperex_16S:
     input:
         rules.cat_ass_16S.output.cat_fa
     output:
@@ -103,6 +103,26 @@ rule trim_16S:
         "hyperex run to trim the 16S sequences from the concatenated assemblies"
     shell:
         "(date && export PATH={params.path}:$PATH && "
-        "hyperex -p $(basename -s '.fa' {output.ext_fa}) --forward-primer {params.fwd} --reverse-primer {params.rev} {input} && "
+        "hyperex -p $(basename -s '.fa' {output.ext_fa}) -f {params.fwd} -r {params.rev} {input} && "
         "date) &> >(tee {log})"
 
+rule extract_16S:
+    input:
+        rules.cat_ass_16S.output.cat_fa
+    output:
+        ext_fa=os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa"),
+        map_fa=os.path.join(RESULTS_DIR, "extracted/extracted_map.fa")
+#    conda:
+#        os.path.join(ENV_DIR, "perl.yaml")
+    log:
+        os.path.join(RESULTS_DIR, "logs/extraction/perl_extract_16S.log")
+    params:
+        src=os.path.join(SRC_DIR, "modified_in_silico_pcr.pl"),
+        fwd=config["hyperex"]["fwd"],
+        rev=config["hyperex"]["rev"]
+    message:
+        "Extracting 16S using an in-silico PCR perl script"
+    shell:
+        "(date && "
+        "perl {params.src} -s {input} -a {params.fwd} -b {params.rev} -e -f {output.ext_fa} -map {output.map_fa} && "
+        "date) &> >(tee {log})"

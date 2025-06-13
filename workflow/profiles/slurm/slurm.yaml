@@ -4,7 +4,7 @@ __default__:
   qos: "normal"
   job-name: "decode.{rule}"
 
-trim_16S:
+hyyperex_16S:
   partition: "ei-medium"
   c: 24
   time: "04:00:00"
