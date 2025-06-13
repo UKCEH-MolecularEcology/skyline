@@ -576,7 +576,8 @@ sub C_amplify {
                     $outpos = $newpos if $opt_e;
                     my $subfragment = substr($sequence, $outpos);
                     $subfragment = reverse($subfragment);
-                    $subfragment =~ tr/ACTGRYKMBVDHactgrykmbvdh/TGACYRMKVBHDtgacyrmkvbvdh/;
+                    # Corrected the tr string for reverse complementation
+                    $subfragment =~ tr/ACTGRYKMBVDHactgrykmbvdh/TGACYRMKVBHDtgacyrmkvbhd/;
                     $counts[2]++; # Increment internal count for this primer type
                     my ($pmm, $pid) = (0) x 2;
                     ($pmm, $pid) = nw($frag, $p2) unless $frag eq $p2;
