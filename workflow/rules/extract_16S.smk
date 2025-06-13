@@ -17,7 +17,8 @@ localrules: install_hyperex
 rule extract_16S_all:
     input:
         expand(f"{RESULTS_DIR}/{{sample}}/{{sample}}_16S_seqs.fa", sample=SAMPLES),
-        "submodules/hyperex_installed.txt"
+        "submodules/hyperex_installed.txt",
+        os.path.join(RESULTS_DIR, "hyperex/extracted_16S.fa")
     output:
         touch("status/extract_16S.done")        
 
@@ -40,6 +41,19 @@ rule rename_16S_headers:
         ' {input} > {output.renamed}
         echo "✔️ Wrote {output.renamed}"
         """
+
+rule cat_ass_16S:
+    input:
+        expand(os.path.join(RESULTS_DIR, "{sample}/{sample}_16S_seqs.fa"), sample=SAMPLES)
+    output:
+        cat_fa=os.path.join(RESULTS_DIR, "concat_16S/concat_ass_16S.fa")
+    log:
+        os.path.join(RESULTS_DIR, "logs/concat/cat_ass_16S.log")        
+    message:
+        "Concatenating the 16S sequences from all assemblies"
+    shell:
+        "(date && cat {input} > {output} && "
+        "date) &> >(tee {log})"
 
 rule install_hyperex:
     output:
@@ -69,3 +83,25 @@ rule install_hyperex:
         # Marker file to indicate successful installation
         touch {output}
         """
+
+rule trim_16S:
+    input:
+        rules.cat_ass_16S.output.cat_fa
+    output:
+        ext_fa=os.path.join(RESULTS_DIR, "hyperex/extracted_16S.fa")
+    conda:
+        "rust"
+    log:
+        os.path.join(RESULTS_DIR, "logs/hyperex/extracting_16S.log")
+    params:
+        src=config["hyperex"]["bin"],
+        fwd=config["hyperex"]["fwd"],
+        rev=config["hyperex"]["rev"]
+    message:
+        "hyperex run to trim the 16S sequences from the concatenated assemblies"
+    shell:
+        "(date && "
+        "{params.src} -p $(basename -s '.fa' {output.ext_fa}) --forward-primer {params.fwd} --reverse-primer {params.rev} {input} && "
+        "date) &> >(tee {log})"
+
+
