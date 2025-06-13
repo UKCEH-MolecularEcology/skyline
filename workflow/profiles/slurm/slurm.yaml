@@ -9,6 +9,18 @@ hyyperex_16S:
   c: 24
   time: "04:00:00"
 
+cluster_otus:
+  partition: "ei-medium"
+  c: 24
+  time: "04:00:00"
+
+make_otu_table:
+  partition: "ei-medium"
+  c: 24
+  time: "04:00:00"
+
+
+
 #input_short:
 #  partition: "ei-medium"
 #  time: "0-00:40:00"

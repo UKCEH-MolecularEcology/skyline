@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["extract"] #, "mags", "analysis"] # USER_INPUT
+steps: ["extract", "cluster"] #, "mags", "analysis"] # USER_INPUT
 
 
 ##################################################
@@ -33,6 +33,11 @@ samples: "config/samples.tsv" # USER_INPUT
 # path to the metadata (if a relative path, relative to this repo)
 metadata: "data" # USER_INPUT
 
+# path to 16S ASV file
+ASV: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/CEH_soil_project/16S/16s_asvs_v2.fasta"
+
+# OTU clustering IDs
+cluster_ids: [97, 99]
 
 ##################################################
 # TOOLS & DATA(BASES)

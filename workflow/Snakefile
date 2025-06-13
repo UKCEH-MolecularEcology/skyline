@@ -44,6 +44,13 @@ if "extract" in config["steps"]:
         "status/extract_16S.done"
     ]
 
+# CLUSTER
+if "cluster" in config["steps"]:
+    include:
+        "rules/otu_clustering.smk"
+    TARGETS += [
+        "status/otu_clustering.done"
+    ]
 
 # No targets
 if len(TARGETS) == 0:

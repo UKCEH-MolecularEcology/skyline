@@ -9,7 +9,7 @@ Purpose: To run Kraken2+BRACKEN on reads
 
 import os
 
-localrules: install_hyperex
+localrules: install_hyperex, extract_16S_all
 
 ###################
 # RULES
@@ -112,8 +112,6 @@ rule extract_16S:
     output:
         ext_fa=os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa"),
         map_fa=os.path.join(RESULTS_DIR, "extracted/extracted_map.txt")
-#    conda:
-#        os.path.join(ENV_DIR, "perl.yaml")
     log:
         os.path.join(RESULTS_DIR, "logs/extraction/perl_extract_16S.log")
     params:
@@ -126,3 +124,5 @@ rule extract_16S:
         "(date && "
         "perl {params.src} -s {input} -a {params.fwd} -b {params.rev} -e -f {output.ext_fa} -n {output.map_fa} && "
         "date) &> >(tee {log})"
+
+
