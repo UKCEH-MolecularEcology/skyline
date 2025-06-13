@@ -85,27 +85,27 @@ Options:
                 break.
   -f            Filename to output amplicon sequences (default: amplicon sequences
                 output to STDERR)
-  -map <string> Filename to output a mapping of original IDs to sanitized IDs.
+  -n <string>   Filename to output a mapping of original IDs to sanitized IDs.
                 (Original_ID<tab>Sanitized_ID)
 
 ";
 
 use Getopt::Long qw(GetOptions);
 Getopt::Long::Configure qw(gnu_getopt);
-my ($opt_s, $opt_a, $opt_b, $opt_p, $opt_l, $opt_m, $opt_i, $opt_e, $opt_r, $opt_c, $opt_f, $opt_map);
+my ($opt_s, $opt_a, $opt_b, $opt_p, $opt_l, $opt_m, $opt_i, $opt_e, $opt_r, $opt_c, $opt_f, $opt_n); # Changed $opt_mapping_file to $opt_n
 GetOptions(
-    's=s'   => \$opt_s,
-    'a=s'   => \$opt_a,
-    'b=s'   => \$opt_b,
-    'p=s'   => \$opt_p,
-    'l=i'   => \$opt_l,
-    'm:s'   => \$opt_m,
-    'i'     => \$opt_i,
-    'e'     => \$opt_e,
-    'r'     => \$opt_r,
-    'c'     => \$opt_c,
-    'f=s'   => \$opt_f,
-    'map=s' => \$opt_map,
+    's=s'           => \$opt_s,
+    'a=s'           => \$opt_a,
+    'b=s'           => \$opt_b,
+    'p=s'           => \$opt_p,
+    'l=i'           => \$opt_l,
+    'm:s'           => \$opt_m,
+    'i'             => \$opt_i,
+    'e'             => \$opt_e,
+    'r'             => \$opt_r,
+    'c'             => \$opt_c,
+    'f=s'           => \$opt_f,
+    'n=s'           => \$opt_n, # Changed 'mapping_file=s' to 'n=s'
 );
 
 die $usage unless ($opt_s);
@@ -162,8 +162,8 @@ $seq = ""; # Clear sequence for next use (though not strictly necessary here)
 
 # Generate and write the ID mapping file if requested
 my $mapfile;
-if ($opt_map) {
-    open ($mapfile, ">$opt_map") or die "ERROR: Can't open $opt_map for writing: $!\n";
+if ($opt_n) { # Changed to $opt_n
+    open ($mapfile, ">$opt_n") or die "ERROR: Can't open $opt_n for writing: $!\n"; # Changed to $opt_n
     print $mapfile "Original_ID\tSanitized_ID\n";
     foreach my $original_id (sort keys %sequences) {
         my $sanitized_id_for_map = $original_id;

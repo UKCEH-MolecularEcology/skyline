@@ -124,5 +124,5 @@ rule extract_16S:
         "Extracting 16S using an in-silico PCR perl script"
     shell:
         "(date && "
-        "perl {params.src} -s {input} -a {params.fwd} -b {params.rev} -e -f {output.ext_fa} -map {output.map_fa} && "
+        "perl {params.src} -s {input} -a {params.fwd} -b {params.rev} -e -f {output.ext_fa} -n {output.map_fa} && "
         "date) &> >(tee {log})"
