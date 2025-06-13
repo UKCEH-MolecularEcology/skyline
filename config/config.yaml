@@ -37,7 +37,7 @@ metadata: "data" # USER_INPUT
 ASV: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/CEH_soil_project/16S/16s_asvs_v2.fasta"
 
 # OTU clustering IDs
-cluster_ids: [97, 99]
+cluster_ids: [90, 95, 97, 99]
 
 ##################################################
 # TOOLS & DATA(BASES)

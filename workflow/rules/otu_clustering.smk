@@ -51,7 +51,7 @@ rule cluster_otus:
     params:
         id=lambda wildcards: float(wildcards.id)/100
     envmodules:
-        "vsearch/2.11.1"
+        "vsearch"
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     shell:
@@ -76,7 +76,7 @@ rule make_otu_table:
     params:
         id=lambda wildcards: float(wildcards.id)/100
     envmodules:
-        "vsearch/2.11.1"
+        "vsearch"
     shell:
         "(date && "
         "vsearch --usearch_global {input.fasta} --db {input.centroids} --id {params.id} --otutabout {output.table} && "
