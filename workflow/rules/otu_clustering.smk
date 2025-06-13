@@ -71,16 +71,16 @@ rule make_otu_table:
         os.path.join(RESULTS_DIR, "logs/cluster/otu_table_{id}.log")
     message:
         "Generating OTU table at {wildcards.id}% identity"
-    conda:
-        os.path.join(ENV_DIR, "vsearch.yaml")
+#    conda:
+#        os.path.join(ENV_DIR, "vsearch.yaml")
+    params:
+        id=lambda wildcards: float(wildcards.id)/100
+    envmodules:
+        "vsearch/2.11.1"
     shell:
-        """
-        (date && \
-        vsearch --usearch_global {input.fasta} \
-                --db {input.centroids} \
-                --id {float(wildcards.id)/100} \
-                --otutabout {output.table} && \
-        date) &> >(tee {log})
-        """
+        "(date && "
+        "vsearch --usearch_global {input.fasta} --db {input.centroids} --id {params.id} --otutabout {output.table} && "
+        "date) &> >(tee {log})"
+        
 
 
