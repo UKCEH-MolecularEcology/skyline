@@ -43,6 +43,7 @@ cluster_ids: [90, 95, 97, 99]
 # TOOLS & DATA(BASES)
 # Trimming 16S
 hyperex:
+  cargo_path: "/hpc-home/kar23heg/.cargo/bin"
   path: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex/install/bin"
   bin: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/susbus/data/skyline/submodules/hyperex/install/bin/hyperex"
   fwd: "GTGYCAGCMGCCGCGGTAA"  # 515F, V4

@@ -18,6 +18,7 @@ rule extract_16S_all:
     input:
         expand(f"{RESULTS_DIR}/{{sample}}/{{sample}}_16S_seqs.fa", sample=SAMPLES),
         "submodules/hyperex_installed.txt",
+        os.path.join(RESULTS_DIR, "hyperex/extracted_16S.fa"),
         os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa")
     output:
         touch("status/extract_16S.done")        
@@ -94,6 +95,7 @@ rule hyperex_16S:
     log:
         os.path.join(RESULTS_DIR, "logs/hyperex/extracting_16S.log")
     params:
+        cargo_path=config["hyperex"]["cargo_path"],
         path=config["hyperex"]["path"],
         fwd=config["hyperex"]["fwd"],
         rev=config["hyperex"]["rev"]
@@ -103,6 +105,7 @@ rule hyperex_16S:
         "hyperex run to trim the 16S sequences from the concatenated assemblies"
     shell:
         "(date && export PATH={params.path}:$PATH && "
+        "export PATH={params.cargo_path}:$PATH && "
         "hyperex -p $(basename -s '.fa' {output.ext_fa}) -f {params.fwd} -r {params.rev} {input} && "
         "date) &> >(tee {log})"
 
