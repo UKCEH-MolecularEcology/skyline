@@ -16,21 +16,21 @@ localrules: add_sample_to_clustering_circ, add_sample_to_clustering_consensus, a
 ###################
 rule bin_info_all:
     input:
-        expand("results/bin_info/{sample}_clustering_circ.tsv", sample=SAMPLES),
-        expand("results/bin_info/{sample}_clustering_consensus.tsv", sample=SAMPLES),
-        expand("results/bin_info/{sample}_gtdbtk_bac_summary.tsv", sample=SAMPLES),
-        expand("results/bin_info/{sample}_gtdbtk_arc_summary.tsv", sample=SAMPLES)
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_circ.tsv"), sample=SAMPLES),
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_consensus.tsv"), sample=SAMPLES),
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_bac_summary.tsv"), sample=SAMPLES),
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv"), sample=SAMPLES)
     output:
         touch("status/bin_info.done")
 
 # Rules to add sample info to existing files
 rule add_sample_to_clustering_circ:
     input:
-        circ="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/binning/circ/clustering_circ.csv"
+        circ=os.path.join(ASS_DIR, "{sample}/metamdbg/binning/circ/clustering_circ.csv")
     output:
-        circ_out="results/bin_info/{sample}_clustering_circ.tsv"
+        circ_out=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_circ.tsv")
     log:
-        "logs/bin_info/{sample}_clustering_circ.log"
+        os.path.join(RESULTS_DIR, "logs/bin_info/{sample}_clustering_circ.log")
     message:
         "Adding sample name to clustering_circ for {wildcards.sample}"
     shell:
@@ -40,11 +40,11 @@ rule add_sample_to_clustering_circ:
 
 rule add_sample_to_clustering_consensus:
     input:
-        cons="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/binning/consensus_LR/clustering_consensus_LR.csv"
+        cons=os.path.join(ASS_DIR, "{sample}/metamdbg/binning/consensus_LR/clustering_consensus_LR.csv")
     output:
-        cons_out="results/bin_info/{sample}_clustering_consensus.tsv"
+        cons_out=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_consensus.tsv")
     log:
-        "logs/bin_info/{sample}_clustering_consensus.log"
+        os.path.join(RESULTS_DIR, "logs/bin_info/{sample}_clustering_consensus.log")
     message:
         "Adding sample name to clustering_consensus_LR for {wildcards.sample}"
     shell:
@@ -54,11 +54,11 @@ rule add_sample_to_clustering_consensus:
 
 rule add_sample_to_gtdbtk_bac_summary:
     input:
-        gtdb="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.bac120.summary.tsv"
+        gtdb=os.path.join(ASS_DIR, "{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.bac120.summary.tsv")
     output:
-        gtdb_out="results/bin_info/{sample}_gtdbtk_bac_summary.tsv"
+        gtdb_out=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_bac_summary.tsv")
     log:
-        "logs/bin_info/{sample}_gtdbtk_bac_summary.log"
+        os.path.join(RESULTS_DIR, "logs/bin_info/{sample}_gtdbtk_bac_summary.log")
     message:
         "Adding sample name to GTDB bacterial summary for {wildcards.sample}"
     shell:
@@ -68,11 +68,11 @@ rule add_sample_to_gtdbtk_bac_summary:
 
 rule add_sample_to_gtdbtk_arc_summary:
     input:
-        gtdb="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.ar53.summary.tsv"
+        gtdb=os.path.join(ASS_DIR, "{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.ar53.summary.tsv")
     output:
-        gtdb_out="results/bin_info/{sample}_gtdbtk_arc_summary.tsv"
+        gtdb_out=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv")
     log:
-        "logs/bin_info/{sample}_gtdbtk_arc_summary.log"
+        os.path.join(RESULTS_DIR, "logs/bin_info/{sample}_gtdbtk_arc_summary.log")
     message:
         "Adding sample name to GTDB archaeal summary for {wildcards.sample}"
     shell:
