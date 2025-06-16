@@ -2,9 +2,9 @@
 Author: Susheel Bhanu BUSI
 Affiliation: Molecular Ecology group, UKCEH
 Date: [2023-08-30]
-Run: snakemake -s workflow/rules/kraken2.smk --use-conda --cores 4 -rp
+Run: snakemake -s workflow/rules/otu_clustering.smk --use-conda --cores 4 -rp
 Latest modification:
-Purpose: To run Kraken2+BRACKEN on reads
+Purpose: To clusters ASVs into OTUs
 """
 
 import os

@@ -1,0 +1,82 @@
+"""
+Author: Susheel Bhanu BUSI
+Affiliation: Molecular Ecology group, UKCEH
+Date: [2023-08-30]
+Run: snakemake -s workflow/rules/bin_info.smk --use-conda --cores 4 -rp
+Latest modification:
+Purpose: To merge bin info with vsearch cluster outputs following LR-ASV clustering with amplicon ASVs
+"""
+
+import os
+
+localrules: add_sample_to_clustering_circ, add_sample_to_clustering_consensus, add_sample_to_gtdbtk_bac_summary, add_sample_to_gtdbtk_arc_summary, bin_info_all
+
+###################
+# RULES
+###################
+rule bin_info_all:
+    input:
+        expand("results/bin_info/{sample}_clustering_circ.tsv", sample=SAMPLES),
+        expand("results/bin_info/{sample}_clustering_consensus.tsv", sample=SAMPLES),
+        expand("results/bin_info/{sample}_gtdbtk_bac_summary.tsv", sample=SAMPLES),
+        expand("results/bin_info/{sample}_gtdbtk_arc_summary.tsv", sample=SAMPLES)
+    output:
+        touch("status/bin_info.done")
+
+# Rules to add sample info to existing files
+rule add_sample_to_clustering_circ:
+    input:
+        circ="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/binning/circ/clustering_circ.csv"
+    output:
+        circ_out="results/bin_info/{sample}_clustering_circ.tsv"
+    log:
+        "logs/bin_info/{sample}_clustering_circ.log"
+    message:
+        "Adding sample name to clustering_circ for {wildcards.sample}"
+    shell:
+        """
+        (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS=","}} NR==1{{$3="sample"}} NR>1{{$3=sample}} {{print $1, $2, $3}}' {input.circ} > {output.circ_out} && date) &> >(tee {log})
+        """
+
+rule add_sample_to_clustering_consensus:
+    input:
+        cons="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/binning/consensus_LR/clustering_consensus_LR.csv"
+    output:
+        cons_out="results/bin_info/{sample}_clustering_consensus.tsv"
+    log:
+        "logs/bin_info/{sample}_clustering_consensus.log"
+    message:
+        "Adding sample name to clustering_consensus_LR for {wildcards.sample}"
+    shell:
+        """
+        (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS=","}} NR==1{{$3="sample"}} NR>1{{$3=sample}} {{print $1, $2, $3}}' {input.cons} > {output.cons_out} && date) &> >(tee {log})
+        """
+
+rule add_sample_to_gtdbtk_bac_summary:
+    input:
+        gtdb="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.bac120.summary.tsv"
+    output:
+        gtdb_out="results/bin_info/{sample}_gtdbtk_bac_summary.tsv"
+    log:
+        "logs/bin_info/{sample}_gtdbtk_bac_summary.log"
+    message:
+        "Adding sample name to GTDB bacterial summary for {wildcards.sample}"
+    shell:
+        """
+        (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS="\\t"}} NR==1{{$17="sample"}} NR>1{{$17=sample}} {{print}}' {input.gtdb} > {output.gtdb_out} && date) &> >(tee {log})
+        """
+
+rule add_sample_to_gtdbtk_arc_summary:
+    input:
+        gtdb="CEHsoil/HiFi/assemblies/SSA/{sample}/metamdbg/MAGs/gtdb_LR/classify/gtdbtk.ar53.summary.tsv"
+    output:
+        gtdb_out="results/bin_info/{sample}_gtdbtk_arc_summary.tsv"
+    log:
+        "logs/bin_info/{sample}_gtdbtk_arc_summary.log"
+    message:
+        "Adding sample name to GTDB archaeal summary for {wildcards.sample}"
+    shell:
+        """
+        (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS="\\t"}} NR==1{{$17="sample"}} NR>1{{$17=sample}} {{print}}' {input.gtdb} > {output.gtdb_out} && date) &> >(tee {log})
+        """
+
