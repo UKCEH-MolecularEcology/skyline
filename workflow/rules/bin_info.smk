@@ -22,7 +22,8 @@ rule bin_info_all:
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv"), sample=SAMPLES),
         expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv"), id=CLUSTER_IDS),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_bin_info.tsv"), sample=SAMPLES),
-        os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv")
+        os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv"),
+        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv"), id=CLUSTER_IDS)
     output:
         touch("status/bin_info.done")
 
@@ -134,4 +135,21 @@ rule combine_all_bin_info:
         head -n1 {input[0]} > {output.merged} && \
         tail -n +2 -q {input} >> {output.merged} && \
         date) &> >(tee {log})
+        """
+
+rule merge_bin_into_clusters:
+    input:
+        bin_info=rules.combine_all_bin_info.output.merged,
+        clusters=lambda wildcards: os.path.join(RESULTS_DIR, f"OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters_split.csv")
+    output:
+        merged=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/merge_with_bin_{id}.log")
+    params:
+        src=os.path.join(SRC_DIR, "merge_bin_into_clusters.py")
+    message:
+        "Merging bin info into clusters for cluster ID {wildcards.id}"
+    shell:
+        """
+        (date && python {params.src} {input.bin_info} {input.clusters} {output.merged} && date) &> >(tee {log})
         """
