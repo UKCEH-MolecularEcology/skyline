@@ -151,3 +151,4 @@ reference_bins/*
 references_bins/
 slurm-**
 *slurm*.out
+*.dot

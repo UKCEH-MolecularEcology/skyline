@@ -104,7 +104,7 @@ Sample configuration includes:
 
 ## 📎 Credits
 
-- 16S extraction and assembly: Skyline team (UKCEH Molecular Ecology Group)
+- 16S extraction and assembly: Skyline team (UKCEH Molecular Ecology Group) and Quince group (Earlham Institute)
 - V-region extraction tool: [`hyperex`](https://github.com/Ebedthan/hyperex)
 - Maintainer: [@susheelbhanu](https://github.com/susheelbhanu)
 
