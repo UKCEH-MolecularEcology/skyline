@@ -19,7 +19,8 @@ rule bin_info_all:
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_circ.tsv"), sample=SAMPLES),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_consensus.tsv"), sample=SAMPLES),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_bac_summary.tsv"), sample=SAMPLES),
-        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv"), sample=SAMPLES)
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv"), sample=SAMPLES),
+        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv"), id=CLUSTER_IDS)
     output:
         touch("status/bin_info.done")
 
@@ -80,3 +81,18 @@ rule add_sample_to_gtdbtk_arc_summary:
         (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS="\\t"}} NR==1{{$17="sample"}} NR>1{{$17=sample}} {{print}}' {input.gtdb} > {output.gtdb_out} && date) &> >(tee {log})
         """
 
+rule split_mixed_cluster_members:
+    input:
+        mixed=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters.csv")
+    output:
+        split=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv")
+    log:
+        os.path.join(RESULTS_DIR, "OTU/{id}_cluster/split_mixed_clusters_{id}.log")
+    params:
+        src=os.path.join(SRC_DIR, "split_mixed_cluster_members.py")
+    message:
+        "Splitting members into individual lines for cluster {wildcards.id}"
+    shell:
+        """
+        (date && python {params.src} {input.mixed} {output.split} && date) &> >(tee {log})
+        """
