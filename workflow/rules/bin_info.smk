@@ -9,7 +9,7 @@ Purpose: To merge bin info with vsearch cluster outputs following LR-ASV cluster
 
 import os
 
-localrules: add_sample_to_clustering_circ, add_sample_to_clustering_consensus, add_sample_to_gtdbtk_bac_summary, add_sample_to_gtdbtk_arc_summary, bin_info_all
+localrules: add_sample_to_clustering_circ, add_sample_to_clustering_consensus, add_sample_to_gtdbtk_bac_summary, add_sample_to_gtdbtk_arc_summary, bin_info_all, combine_all_bin_info
 
 ###################
 # RULES
@@ -20,11 +20,13 @@ rule bin_info_all:
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_consensus.tsv"), sample=SAMPLES),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_bac_summary.tsv"), sample=SAMPLES),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_gtdbtk_arc_summary.tsv"), sample=SAMPLES),
-        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv"), id=CLUSTER_IDS),
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_bin_info.tsv"), sample=SAMPLES),
+        os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv")
     output:
         touch("status/bin_info.done")
 
-# Rules to add sample info to existing files
+# Rules to add sample info to existing LongFlow output files
 rule add_sample_to_clustering_circ:
     input:
         circ=os.path.join(ASS_DIR, "{sample}/metamdbg/binning/circ/clustering_circ.csv")
@@ -81,13 +83,14 @@ rule add_sample_to_gtdbtk_arc_summary:
         (date && awk -v sample="{wildcards.sample}" 'BEGIN{{FS=OFS="\\t"}} NR==1{{$17="sample"}} NR>1{{$17=sample}} {{print}}' {input.gtdb} > {output.gtdb_out} && date) &> >(tee {log})
         """
 
+# Splitting the mixed vsearch clusters for downstream processing
 rule split_mixed_cluster_members:
     input:
         mixed=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters.csv")
     output:
         split=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv")
     log:
-        os.path.join(RESULTS_DIR, "OTU/{id}_cluster/split_mixed_clusters_{id}.log")
+        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/split_mixed_clusters_{id}.log")
     params:
         src=os.path.join(SRC_DIR, "split_mixed_cluster_members.py")
     message:
@@ -95,4 +98,40 @@ rule split_mixed_cluster_members:
     shell:
         """
         (date && python {params.src} {input.mixed} {output.split} && date) &> >(tee {log})
+        """
+
+rule merge_bin_clustering_info:
+    input:
+        circ=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_circ.tsv"),
+        consensus=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_clustering_consensus.tsv")
+    output:
+        merged=os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_bin_info.tsv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/bin_info/{sample}_merge_bin_info.log")
+    params:
+        src=os.path.join(SRC_DIR, "merge_sample_bin_info.py")
+    message:
+        "Merging clustering files for {wildcards.sample}"
+    shell:
+        """
+        (date && \
+        python {params.src} {input.circ} {input.consensus} {wildcards.sample} {output.merged} && \
+        date) &> >(tee {log})
+        """
+
+rule combine_all_bin_info:
+    input:
+        expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_bin_info.tsv"), sample=SAMPLES)
+    output:
+        merged=os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/bin_info/combine_all_bin_info.log")
+    message:
+        "Combining bin info from all samples into one file"
+    shell:
+        """
+        (date && \
+        head -n1 {input[0]} > {output.merged} && \
+        tail -n +2 -q {input} >> {output.merged} && \
+        date) &> >(tee {log})
         """
