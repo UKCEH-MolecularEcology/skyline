@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["extract", "cluster"] #, "mags", "analysis"] # USER_INPUT
+steps: ["extract", "cluster", "bin_info"] #, "mags", "analysis"] # USER_INPUT
 
 
 ##################################################

@@ -52,6 +52,14 @@ if "cluster" in config["steps"]:
         "status/otu_clustering.done"
     ]
 
+# BIN_INFO
+if "bin_info" in config["steps"]:
+    include:
+        "rules/bin_info.smk"
+    TARGETS += [
+        "status/bin_info.done"
+    ]
+
 # No targets
 if len(TARGETS) == 0:
     raise Exception('You are not serious. Nothing to be done? Really?')
