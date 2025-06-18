@@ -146,7 +146,7 @@ rule merge_bin_into_clusters:
     log:
         os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/merge_with_bin_{id}.log")
     params:
-        src=os.path.join(SRC_DIR, "merge_bin_into_clusters.py")
+        src=os.path.join(SRC_DIR, "merge_bin_into_clusters_updated.py")
     message:
         "Merging bin info into clusters for cluster ID {wildcards.id}"
     shell:
