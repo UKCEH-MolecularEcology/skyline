@@ -23,7 +23,8 @@ rule bin_info_all:
         expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv"), id=CLUSTER_IDS),
         expand(os.path.join(RESULTS_DIR, "bin_info/{sample}/{sample}_bin_info.tsv"), sample=SAMPLES),
         os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv"),
-        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv"), id=CLUSTER_IDS),
+        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_mag_mapping_{id}.tsv"), id=CLUSTER_IDS)
     output:
         touch("status/bin_info.done")
 
@@ -152,4 +153,20 @@ rule merge_bin_into_clusters:
     shell:
         """
         (date && python {params.src} {input.bin_info} {input.clusters} {output.merged} && date) &> >(tee {log})
+        """
+
+rule map_asvs_to_mags:
+    input:
+        enriched=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv")
+    output:
+        mapping=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_mag_mapping_{id}.tsv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/asv_to_mag_mapping_{id}.log")
+    params:
+        src=os.path.join(SRC_DIR, "map_asvs_to_mags.py")
+    message:
+        "Mapping ASVs to MAGs & sample names for cluster {wildcards.id}"
+    shell:
+        """
+        (date && python {params.src} {input.enriched} {output.mapping} && date) &> >(tee {log})
         """
