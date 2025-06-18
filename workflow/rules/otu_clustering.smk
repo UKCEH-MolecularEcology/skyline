@@ -9,7 +9,7 @@ Purpose: To clusters ASVs into OTUs
 
 import os
 
-localrules: cat_asvs, otu_all, parse_cluster_logs
+localrules: cat_asvs, otu_all, parse_cluster_logs, summarize_cluster_counts, combine_cluster_summaries
 
 CLUSTER_IDS=config["cluster_ids"]
 
@@ -119,24 +119,47 @@ rule analyse_otu_clusters:
     script:
         os.path.join(SRC_DIR, "analyse_uc_clusters.py")
 
+#rule summarize_cluster_counts:
+#    input:
+#        amplicon_only=rules.analyse_otu_clusters.output.amp_only,
+#        longread_only=rules.analyse_otu_clusters.output.lr_only,
+#        mixed=rules.analyse_otu_clusters.output.mixed,
+#        singleton_amplicon=rules.analyse_otu_clusters.output.sing_amp,
+#        singleton_longread=rules.analyse_otu_clusters.output.sing_lr
+#    output:
+#        summary=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/cluster_{id}_summary.tsv")
+#    log:
+#        os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}_summary.log")
+#    message:
+#        "Summarizing cluster counts for identity {wildcards.id}"
+#    shell:
+#        """
+#        (
+#            echo -e "Cluster ID\tAmplicon Only\tLongread Only\tMixed\tSingleton Amplicon\tSingleton Longread" &&
+#            echo -e "{wildcards.id}\t$(wc -l < {input.amplicon_only})\t$(wc -l < {input.longread_only})\t$(wc -l < {input.mixed})\t$(wc -l < {input.singleton_amplicon})\t$(wc -l < {input.singleton_longread})
+#        ) > {output.summary}
+#        """ + " &> >(tee {log})"
+
 rule summarize_cluster_counts:
     input:
-        amplicon_only=rules.analyse_otu_clusters.output.amp_only,
-        longread_only=rules.analyse_otu_clusters.output.lr_only,
-        mixed=rules.analyse_otu_clusters.output.mixed,
-        singleton_amplicon=rules.analyse_otu_clusters.output.sing_amp,
-        singleton_longread=rules.analyse_otu_clusters.output.sing_lr
+        lambda wildcards: expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_{type}.csv"),
+                                 id=wildcards.id,
+                                 type=["amplicon_only", "longread_only", "mixed_clusters", "singleton_amplicon", "singleton_longread"])
     output:
         summary=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/cluster_{id}_summary.tsv")
     log:
-        "logs/cluster/cluster_{id}_summary.log"
+        os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}_summary.log")
     message:
         "Summarizing cluster counts for identity {wildcards.id}"
     shell:
-        """
+        r"""
         (
             echo -e "Cluster ID\tAmplicon Only\tLongread Only\tMixed\tSingleton Amplicon\tSingleton Longread" &&
-            echo -e "{wildcards.id}\t$(wc -l < {input.amplicon_only})\t$(wc -l < {input.longread_only})\t$(wc -l < {input.mixed})\t$(wc -l < {input.singleton_amplicon})\t$(wc -l < {input.singleton_longread})
+            echo -e "{wildcards.id}\t$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_amplicon_only.csv)\t\
+$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_longread_only.csv)\t\
+$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters.csv)\t\
+$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_amplicon.csv)\t\
+$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_longread.csv)"
         ) > {output.summary}
         """ + " &> >(tee {log})"
 
@@ -146,7 +169,7 @@ rule combine_cluster_summaries:
     output:
         combined=os.path.join(RESULTS_DIR, "OTU/all_cluster_summaries.tsv")
     log:
-        "logs/cluster/combined_cluster_summary.log"
+        os.path.join(RESULTS_DIR, "logs/cluster/combined_cluster_summary.log")
     message:
         "Combining all cluster summaries into one file"
     shell:
