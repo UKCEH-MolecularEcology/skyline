@@ -56,8 +56,11 @@ if "cluster" in config["steps"]:
 if "bin_info" in config["steps"]:
     include:
         "rules/bin_info.smk"
+    include:
+        "rules/mag_link.smk"
     TARGETS += [
-        "status/bin_info.done"
+        "status/bin_info.done",
+        "status/mag_link.done"
     ]
 
 # No targets
