@@ -31,6 +31,7 @@ DBS_DIR = config["dbsdir"] # database folder
 
 MDATA_DIR = os.path.abspath(config["metadata"]) # path to (meta)data
 ASS_DIR = os.path.abspath(config["ass_dir"])	# path to assembly files
+DREP_DIR = os.path.abspath(config["drep_dir"])    # path to dereplicated mags
 RESULTS_DIR = os.path.abspath(config["results_dir"])	# path to the results folder
 OLDPWD = os.path.abspath(os.getcwd()) # PWD before changing the working directory
 
