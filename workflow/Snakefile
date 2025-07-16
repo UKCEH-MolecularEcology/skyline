@@ -63,6 +63,15 @@ if "bin_info" in config["steps"]:
         "status/mag_link.done"
     ]
 
+# DEREPLICATED MAGS
+if "dereplicate" in config["steps"]:
+    include:
+        "rules/dereplicated_mag_link.smk"
+    TARGETS += [
+        "status/dereplicated_mag_link.done"
+    ]
+
+
 # No targets
 if len(TARGETS) == 0:
     raise Exception('You are not serious. Nothing to be done? Really?')
