@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["extract", "cluster", "bin_info", "dereplicate"] #, "mags", "analysis"] # USER_INPUT
+steps: ["dereplicate"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate] # USER_INPUT
 
 
 ##################################################
