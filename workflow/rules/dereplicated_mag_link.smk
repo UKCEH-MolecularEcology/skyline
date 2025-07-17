@@ -9,47 +9,38 @@ Purpose: To merge bin info with vsearch cluster outputs following LR-ASV cluster
 
 import os
 
-localrules: add_sample_to_clustering_circ, add_sample_to_clustering_consensus, add_sample_to_gtdbtk_bac_summary, add_sample_to_gtdbtk_arc_summary, bin_info_all, combine_all_bin_info
+# parameters
+CLUSTER_IDS = config["cluster_ids"]
+
+localrules: merge_dereplicated_bin_into_clusters 
 
 ###################
 # RULES
 ###################
 rule dereplicated_mag_link_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}_with_tax.tsv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS)
     output:
         touch("status/dereplicated_mag_link.done")
 
-# gathering the bin info for all dereplicated mags
-rule dereplicated_all_bin_info:
-    input:
-        os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv")
-    output:
-        merged=os.path.join(RESULTS_DIR, "bin_info/all_sample_bin_info.tsv")
-    log:
-        os.path.join(RESULTS_DIR, "logs/bin_info/combine_all_bin_info.log")
-    message:
-        "Combining bin info from all samples into one file"
-    shell:
-        "(date && cp -v {input[0]} {output.merged} && date) &> >(tee {log})"
 
+# merging the dereplicated bin and contig info with the cluster info
 rule merge_dereplicated_bin_into_clusters:
     input:
-        bin_info=rules.dereplicated_all_bin_info.output.merged,
+        bin_info=os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv"),
         clusters=lambda wildcards: os.path.join(RESULTS_DIR, f"OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters_split.csv")
     output:
-        merged=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv")
+        merged=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv")
     log:
         os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/merge_with_bin_{id}.log")
     params:
-        src=os.path.join(SRC_DIR, "merge_bin_into_clusters_updated.py")
+        src=os.path.join(SRC_DIR, "merge_dereplicated_bins_to_clusters.py")
     message:
-        "Merging bin info into clusters for cluster ID {wildcards.id}"
+        "Merging dereplicated bin info into clusters for cluster ID {wildcards.id}"
     shell:
         """
         (date && python {params.src} {input.bin_info} {input.clusters} {output.merged} && date) &> >(tee {log}) 
         """
-        # check the params.src to make sure column names match
 
 # Linking the ASVs to dereplicated LR-MAGs
 rule map_asvs_to_dreplicated_mags:
