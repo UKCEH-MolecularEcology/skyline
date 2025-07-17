@@ -12,14 +12,15 @@ import os
 # parameters
 CLUSTER_IDS = config["cluster_ids"]
 
-localrules: merge_dereplicated_bin_into_clusters 
+localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags
 
 ###################
 # RULES
 ###################
 rule dereplicated_mag_link_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS),
+        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv"), id=CLUSTER_IDS)
     output:
         touch("status/dereplicated_mag_link.done")
 
@@ -45,13 +46,13 @@ rule merge_dereplicated_bin_into_clusters:
 # Linking the ASVs to dereplicated LR-MAGs
 rule map_asvs_to_dreplicated_mags:
     input:
-        enriched=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_with_bin.csv")
+        enriched=rules.merge_dereplicated_bin_into_clusters.output.merged
     output:
-        mapping=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}.tsv")
+        mapping=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv")
     log:
-        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}.log")
+        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/asv_to_dmag_mapping_{id}.log")
     params:
-        src=os.path.join(SRC_DIR, "map_asvs_to_mags.py")
+        src=os.path.join(SRC_DIR, "map_asvs_to_dmags.py")
     message:
         "Mapping ASVs to MAGs & sample names for cluster {wildcards.id}"
     shell:
