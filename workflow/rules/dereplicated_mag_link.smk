@@ -12,7 +12,7 @@ import os
 # parameters
 CLUSTER_IDS = config["cluster_ids"]
 
-localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags
+localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags, concat_dereplicated_gtdbtk_summaries
 
 ###################
 # RULES
@@ -20,7 +20,8 @@ localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags
 rule dereplicated_mag_link_all:
     input:
         expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS),
-        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv"), id=CLUSTER_IDS),
+        os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv")
     output:
         touch("status/dereplicated_mag_link.done")
 
@@ -50,7 +51,7 @@ rule map_asvs_to_dreplicated_mags:
     output:
         mapping=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv")
     log:
-        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/asv_to_dmag_mapping_{id}.log")
+        os.path.join(RESULTS_DIR, "logs/dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.log")
     params:
         src=os.path.join(SRC_DIR, "map_asvs_to_dmags.py")
     message:
@@ -66,17 +67,17 @@ rule concat_dereplicated_gtdbtk_summaries:
         arc=os.path.join(DREP_DIR, "gtdb/gtdbtk.ar53.summary.tsv"),
         bac=os.path.join(DREP_DIR, "gtdb/gtdbtk.bac120.summary.tsv")
     output:
-        combined=os.path.join(RESULTS_DIR, "bin_info/all_sample_gtdbtk_summary.tsv")
+        combined=os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv")
     log:
-        os.path.join(RESULTS_DIR, "logs/bin_info/all_sample_dereplicated_concat_gtdbtk.log")
+        os.path.join(RESULTS_DIR, "logs/dereplicated_OTU/dmag_concat_gtdbtk.log")
     params:
         src=os.path.join(SRC_DIR, "concat_gtdbtk_summaries.py")
     message:
-        "Concatenating GTDB-Tk summaries for all mags"
+        "Concatenating GTDB-Tk summaries for all dmags"
     shell:
         """
-        (date && python {params.src} results/bin_info/ {output.combined} && date) &> >(tee {log})
-        """        
+        (date && awk 'NR==1 || FNR>1' {input.arc} {input.bac} > {output.combined} && date) &> >(tee {log})
+        """
 
 # Merging ASV to dereplicated MAG mapping with taxonomy
 rule merge_asv_to_dreplicated_mag_with_gtdbtk:
