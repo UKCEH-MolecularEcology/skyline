@@ -19,10 +19,7 @@ localrules:
 ###################
 rule compare_globdb_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS),
-        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv"), id=CLUSTER_IDS),
-        os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv"),
-        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}_with_tax.tsv"), id=CLUSTER_IDS)
+        expand(os.path.join(RESULTS_DIR, "fastani/skyline_vs_{catalogue}_ani.txt"), catalogue=["smag", "globdb"])
     output:
         touch("status/compare_globdb.done")
 
@@ -68,13 +65,23 @@ rule compare_skyline_smag:
         "date) &> >(tee {log})"
 
 # Comparing Skyline and GLOB_DB catalogue
-use rule compare_skyline_smag as compare_skyline_globdb:
+rule compare_skyline_globdb:
     input:
         query=rules.create_lists.output.smag_list,
         ref=rules.create_lists.output.glob_list
     output:
-        sky_smag=os.path.join(RESULTS_DIR, "fastani/skyline_vs_globdb_ani.txt")
+        sky_glob=os.path.join(RESULTS_DIR, "fastani/skyline_vs_globdb_ani.txt")
     log:
         os.path.join(RESULTS_DIR, "logs/fastani/compare_skyline_globdb.log")
+    conda:
+        "anvio-8"
+    threads:
+        config["fastani"]["threads"]
+    message:
+        "Comparing Skyline MAGs to GLOB_DB catalogue"
+    shell:
+        "(date && "
+        "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_glob} -t {threads} && "
+        "date) &> >(tee {log})"
 
 
