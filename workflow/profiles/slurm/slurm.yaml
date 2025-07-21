@@ -24,7 +24,20 @@ make_otu_table:
   c: 24
   time: "04:00:00"
 
+create_lists:
+  partition: "ei-medium"
+  c: 4
+  time: "02:00:00"
 
+compare_skyline_smag:
+  partition: "ei-medium"
+  c: 48
+  time: "12:00:00"
+
+compare_skyline_globdb:
+  partition: "ei-medium"
+  c: 48
+  time: "12:00:00"
 
 #input_short:
 #  partition: "ei-medium"
