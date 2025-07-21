@@ -28,7 +28,7 @@ rule compare_globdb_all:
 rule create_lists:
     input:
         skyline=os.path.join(DREP_DIR, "drep/dereplicated_genomes/"),
-        globdb=os.path.join(DB_DIR, "globdb/globdb_r226_genome_fasta/")
+        globdb=os.path.join(DBS_DIR, "globdb/globdb_r226_genome_fasta/")
     output:
         sky_list=os.path.join(RESULTS_DIR, "fastani/skyline_mags.txt"),
         glob_list=os.path.join(RESULTS_DIR, "fastani/glob_mags.txt"),
