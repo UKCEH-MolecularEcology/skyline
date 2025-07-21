@@ -12,7 +12,7 @@ import os
 # parameters
 CLUSTER_IDS = config["cluster_ids"]
 
-localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags, concat_dereplicated_gtdbtk_summaries
+localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags, concat_dereplicated_gtdbtk_summaries, merge_asv_to_dmag_with_gtdbtk
 
 ###################
 # RULES
@@ -21,7 +21,8 @@ rule dereplicated_mag_link_all:
     input:
         expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv"), id=CLUSTER_IDS),
         expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv"), id=CLUSTER_IDS),
-        os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv")
+        os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv"),
+        expand(os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}_with_tax.tsv"), id=CLUSTER_IDS)
     output:
         touch("status/dereplicated_mag_link.done")
 
@@ -47,7 +48,8 @@ rule merge_dereplicated_bin_into_clusters:
 # Linking the ASVs to dereplicated LR-MAGs
 rule map_asvs_to_dreplicated_mags:
     input:
-        enriched=rules.merge_dereplicated_bin_into_clusters.output.merged
+        enriched=rules.merge_dereplicated_bin_into_clusters.output.merged,
+        dmag_map=os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv")
     output:
         mapping=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv")
     log:
@@ -55,11 +57,26 @@ rule map_asvs_to_dreplicated_mags:
     params:
         src=os.path.join(SRC_DIR, "map_asvs_to_dmags.py")
     message:
-        "Mapping ASVs to MAGs & sample names for cluster {wildcards.id}"
+        "Mapping ASVs to dereplicated MAGs for cluster {wildcards.id}"
     shell:
         """
-        (date && python {params.src} {input.enriched} {output.mapping} && date) &> >(tee {log})
+        (date && python {params.src} {input.enriched} {input.dmag_map} {output.mapping} && date) &> >(tee {log})
         """
+#rule map_asvs_to_dreplicated_mags:
+#    input:
+#        enriched=rules.merge_dereplicated_bin_into_clusters.output.merged,
+#    output:
+#        mapping=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv")
+#    log:
+#        os.path.join(RESULTS_DIR, "logs/dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.log")
+#    params:
+#        src=os.path.join(SRC_DIR, "map_asvs_to_dmags.py")
+#    message:
+#        "Mapping ASVs to MAGs & sample names for cluster {wildcards.id}"
+#    shell:
+#        """
+#        (date && python {params.src} {input.enriched} {output.mapping} && date) &> >(tee {log})
+#        """
 
 # Concatenating the GTDBtk summaries for the dereplicated bins
 rule concat_dereplicated_gtdbtk_summaries:
@@ -80,16 +97,16 @@ rule concat_dereplicated_gtdbtk_summaries:
         """
 
 # Merging ASV to dereplicated MAG mapping with taxonomy
-rule merge_asv_to_dreplicated_mag_with_gtdbtk:
+rule merge_asv_to_dmag_with_gtdbtk:
     input:
-        mapping=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}.tsv"),
+        mapping=rules.map_asvs_to_dreplicated_mags.output.mapping,
         gtdbtk=rules.concat_dereplicated_gtdbtk_summaries.output.combined
     output:
-        merged=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}_with_tax.tsv")
+        merged=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}_with_tax.tsv")
     log:
-        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/asv_to_dereplicated_mag_mapping_{id}_with_tax.log")
+        os.path.join(RESULTS_DIR, "logs/dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}_with_tax.log")
     params:
-        script=os.path.join(SRC_DIR, "merge_asv_to_mag_with_gtdbtk.py")
+        script=os.path.join(SRC_DIR, "merge_asv_dmag_with_gtdbtk.py")
     message:
         "Merging ASV-MAG mappings with GTDB-Tk taxonomy for cluster {wildcards.id}"
     shell:

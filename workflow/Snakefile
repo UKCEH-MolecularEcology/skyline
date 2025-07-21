@@ -71,6 +71,14 @@ if "dereplicate" in config["steps"]:
         "status/dereplicated_mag_link.done"
     ]
 
+# COMPARIING WITH GLOBDB and SMAG
+if "comparison" in config["steps"]:
+    include:
+        "rules/compare_globdb.smk"
+    TARGETS += [
+        "status/compare_globdb.done"
+    ]
+
 
 # No targets
 if len(TARGETS) == 0:

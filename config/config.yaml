@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate] # USER_INPUT
 
 
 ##################################################
@@ -126,3 +126,6 @@ samtools:
   sort:
     chunk_size: "4G"
     chunk_size_bigmem: "16G"  
+
+fastani:
+  threads: 48
