@@ -39,15 +39,15 @@ rule create_lists:
         "Creating query and reference lists for downstream fastANI processing"
     shell:
         "(date && "
-        "find {input.skyline}/ -name "*.fa" > {output.sky_list} && "
-        "find {input.globdb}/ -name "*.fa" > {output.glob_list} && "
-        "find {input.globdb}/ -name "SMAGOTU_*.fa" > {output.smag_list} && "
+        "find {input.skyline}/ -name '*.fa' > {output.sky_list} && "
+        "find {input.globdb}/ -name '*.fa' > {output.glob_list} && "
+        "find {input.globdb}/ -name 'SMAGOTU_*.fa' > {output.smag_list} && "
         "date) &> >(tee {log})"
 
 # Comparing Skyline and SMAG catalogue
 rule compare_skyline_smag:
     input:
-        query=rules.create_lists.output.smag_list,
+        query=rules.create_lists.output.sky_list,
         ref=rules.create_lists.output.smag_list
     output:
         sky_smag=os.path.join(RESULTS_DIR, "fastani/skyline_vs_smag_ani.txt")
@@ -67,7 +67,7 @@ rule compare_skyline_smag:
 # Comparing Skyline and GLOB_DB catalogue
 rule compare_skyline_globdb:
     input:
-        query=rules.create_lists.output.smag_list,
+        query=rules.create_lists.output.sky_list,
         ref=rules.create_lists.output.glob_list
     output:
         sky_glob=os.path.join(RESULTS_DIR, "fastani/skyline_vs_globdb_ani.txt")
