@@ -12,7 +12,7 @@ import os
 # parameters
 CLUSTER_IDS = config["cluster_ids"]
 
-localrules: compare_globdb_all
+localrules: create_lists, compare_globdb_all
 
 ###################
 # RULES
