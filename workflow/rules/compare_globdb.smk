@@ -19,7 +19,7 @@ localrules: compare_globdb_all
 ###################
 rule compare_globdb_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "fastani/skyline_vs_{catalogue}_ani.txt"), catalogue=["smag", "globdb"])
+        expand(os.path.join(RESULTS_DIR, "fastani/skyline_vs_{catalogue}_ani.txt"), catalogue=["smag"])	# , "globdb"])
     output:
         touch("status/compare_globdb.done")
 
@@ -28,10 +28,11 @@ rule compare_globdb_all:
 rule create_lists:
     input:
         skyline=os.path.join(DREP_DIR, "drep/dereplicated_genomes/"),
-        globdb=os.path.join(DBS_DIR, "globdb/globdb_r226_genome_fasta/")
+#        globdb=os.path.join(DBS_DIR, "globdb/globdb_r226_genome_fasta/")
+        smagdb=os.path.join(DBS_DIR, "globdb/smag_catalogue/")
     output:
         sky_list=os.path.join(RESULTS_DIR, "fastani/skyline_mags.txt"),
-        glob_list=os.path.join(RESULTS_DIR, "fastani/glob_mags.txt"),
+#        glob_list=os.path.join(RESULTS_DIR, "fastani/glob_mags.txt"),
         smag_list=os.path.join(RESULTS_DIR, "fastani/smag_mags.txt")
     log:
         os.path.join(RESULTS_DIR, "logs/fastani/query_ref_lists.log")
@@ -40,8 +41,8 @@ rule create_lists:
     shell:
         "(date && "
         "find {input.skyline}/ -name '*.fa' > {output.sky_list} && "
-        "find {input.globdb}/ -name '*.fa' > {output.glob_list} && "
-        "find {input.globdb}/ -name 'SMAGOTU_*.fa' > {output.smag_list} && "
+#        "find {input.globdb}/ -name '*.fa' > {output.glob_list} && "
+        "find {input.smagdb}/ -name 'SMAGOTU_*.fa' > {output.smag_list} && "
         "date) &> >(tee {log})"
 
 # Comparing Skyline and SMAG catalogue
@@ -64,24 +65,24 @@ rule compare_skyline_smag:
         "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_smag} -t {threads} && "
         "date) &> >(tee {log})"
 
-# Comparing Skyline and GLOB_DB catalogue
-rule compare_skyline_globdb:
-    input:
-        query=rules.create_lists.output.sky_list,
-        ref=rules.create_lists.output.glob_list
-    output:
-        sky_glob=os.path.join(RESULTS_DIR, "fastani/skyline_vs_globdb_ani.txt")
-    log:
-        os.path.join(RESULTS_DIR, "logs/fastani/compare_skyline_globdb.log")
-    conda:
-        "anvio-8"
-    threads:
-        config["fastani"]["threads"]
-    message:
-        "Comparing Skyline MAGs to GLOB_DB catalogue"
-    shell:
-        "(date && "
-        "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_glob} -t {threads} && "
-        "date) &> >(tee {log})"
+## Comparing Skyline and GLOB_DB catalogue
+#rule compare_skyline_globdb:
+#    input:
+#        query=rules.create_lists.output.sky_list,
+#        ref=rules.create_lists.output.glob_list
+#    output:
+#        sky_glob=os.path.join(RESULTS_DIR, "fastani/skyline_vs_globdb_ani.txt")
+#    log:
+#        os.path.join(RESULTS_DIR, "logs/fastani/compare_skyline_globdb.log")
+#    conda:
+#        "anvio-8"
+#    threads:
+#        config["fastani"]["threads"]
+#    message:
+#        "Comparing Skyline MAGs to GLOB_DB catalogue"
+#    shell:
+#        "(date && "
+#        "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_glob} -t {threads} && "
+#        "date) &> >(tee {log})"
 
 
