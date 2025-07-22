@@ -19,7 +19,8 @@ localrules: create_lists, compare_globdb_all
 ###################
 rule compare_globdb_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "fastani/skyline_vs_{catalogue}_ani.txt"), catalogue=["smag"])	# , "globdb"])
+        expand(os.path.join(RESULTS_DIR, "fastani/skyline_vs_{catalogue}_ani.txt"), catalogue=["smag"]),	# , "globdb"])
+        os.path.join(RESULTS_DIR, "fastani/skyline_vs_smag_drep_ani.txt")
     output:
         touch("status/compare_globdb.done")
 
@@ -60,6 +61,25 @@ rule compare_skyline_smag:
         config["fastani"]["threads"]
     message:
         "Comparing Skyline MAGs to SMAG catalogue"
+    shell:
+        "(date && "
+        "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_smag} -t {threads} && "
+        "date) &> >(tee {log})"
+
+rule compare_drep_smag:
+    input:
+        query=rules.create_lists.output.sky_list,
+        ref=os.path.join(DBS_DIR, "globdb/smag_catalogue/smag_drep_list_final.txt")
+    output:
+        sky_smag=os.path.join(RESULTS_DIR, "fastani/skyline_vs_smag_drep_ani.txt")
+    log:
+        os.path.join(RESULTS_DIR, "logs/fastani/compare_skyline_smag_drep.log")
+    conda:
+        "anvio-8"
+    threads:
+        config["fastani"]["threads"]
+    message:
+        "Comparing Skyline to Dereplicated SMAG catalogue"
     shell:
         "(date && "
         "fastANI --ql {input.query} --rl {input.ref} -o {output.sky_smag} -t {threads} && "

@@ -39,6 +39,11 @@ compare_skyline_globdb:
   c: 48
   time: "12:00:00"
 
+compare_drep_smag:
+  partition: "ei-medium"
+  c: 48
+  time: "12:00:00"
+
 #input_short:
 #  partition: "ei-medium"
 #  time: "0-00:40:00"
