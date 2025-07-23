@@ -77,7 +77,7 @@ rule compare_drep_smag:
     conda:
         "anvio-8"
     threads:
-        config["fastani"]["threads"]
+        config["fastani"]["drep_threads"]
     message:
         "Comparing Skyline to Dereplicated SMAG catalogue"
     shell:

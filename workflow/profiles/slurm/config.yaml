@@ -6,7 +6,7 @@
 snakefile: "workflow/Snakefile"
 
 # total number of cores and jobs
-cores: 48
+cores: 96
 jobs: 5
 # for local rules: use at most N cores of the host machine in parallel
 local-cores: 1

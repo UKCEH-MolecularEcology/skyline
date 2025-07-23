@@ -40,8 +40,9 @@ compare_skyline_globdb:
   time: "12:00:00"
 
 compare_drep_smag:
-  partition: "ei-medium"
-  c: 48
+  partition: "ei-largemem"
+  nodes: 1
+  cpus-per-task: 64
   time: "12:00:00"
 
 #input_short:
