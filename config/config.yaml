@@ -129,4 +129,4 @@ samtools:
 
 fastani:
   threads: 48
-  drep_threads: 64
+  largemem_threads: 16
