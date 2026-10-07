@@ -134,6 +134,8 @@ rule portraits_batch:
         "--input_dir {params.rundir}/input --output_dir {params.rundir} "
         "--metatraits_models {params.models} --recognise_marker_genes {params.markers} "
         "--eggnog_db {params.eggnog} --pfam_clade_map {input.pfam} && "
+        "(grep 'Error is ignored' .nextflow.log > skipped_tasks.txt || true) && "
+        "echo \"skipped tasks: $(wc -l < skipped_tasks.txt)\" && "
         "rm -rf {params.rundir}/work && date) &> >(tee {log})"
 
 # all batches -> one table
