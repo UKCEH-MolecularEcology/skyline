@@ -41,7 +41,7 @@ latency-wait: 60
 # number of times to restart failing jobs
 restart-times: 0
 # execute snakemake rules with the given submit command
-cluster: "sbatch -p {cluster.partition} -q {cluster.qos} -N 1 -n 1 -c {threads} -t {cluster.time} -J {cluster.job-name}"
+cluster: "sbatch -p {cluster.partition} -q {cluster.qos} -N 1 -n 1 -c {threads} --mem={cluster.mem} -t {cluster.time} -J {cluster.job-name}"
 # slurm config (ABSOLUTE PATH !!!)
 cluster-config: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/workflow/profiles/slurm/slurm.yaml" # USER_INPUT
 # max. number of cluster/drmaa jobs per second

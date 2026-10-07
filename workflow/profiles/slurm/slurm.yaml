@@ -2,6 +2,7 @@ __default__:
   time: "0-00:30:00"
   partition: "ei-medium"
   qos: "normal"
+  mem: "4G"
   job-name: "decode.{rule}"
 
 hyyperex_16S:
@@ -46,3 +47,39 @@ compare_drep_smag:
   mem: "1024G"
   time: "12:00:00"
 
+
+# MAG annotations
+coverm_check:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "02:00:00"
+
+microtrait_mag:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "04:00:00"
+
+microtrait_genomeset:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "12:00:00"
+
+prodigal_mag:
+  partition: "ei-medium"
+  mem: "4G"
+  time: "00:30:00"
+
+rgi_mag:
+  partition: "ei-medium"
+  mem: "16G"
+  time: "04:00:00"
+
+bacmet_makedb:
+  partition: "ei-medium"
+  mem: "4G"
+  time: "00:30:00"
+
+bacmet_mag:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "01:00:00"

@@ -35,6 +35,14 @@ DREP_DIR = os.path.abspath(config["drep_dir"])    # path to dereplicated mags
 RESULTS_DIR = os.path.abspath(config["results_dir"])	# path to the results folder
 OLDPWD = os.path.abspath(os.getcwd()) # PWD before changing the working directory
 
+# MAG annotations (steps: coverage_check, traits, amr)
+if "annotations" in config:
+    ANNOT_MAGS_DIR = os.path.abspath(config["annotations"]["mags_dir"])        # dereplicated MQ MAGs
+    ANNOT_MAGS_EXT = config["annotations"].get("mags_ext", "fa")
+    ANNOT_RESULTS_DIR = os.path.abspath(config["annotations"]["results_dir"])  # annotation outputs
+    ANNOT_DBS_DIR = os.path.abspath(config["annotations"]["dbs_dir"])          # CARD, BacMet
+    ANNOT_MAGS = sorted(glob_wildcards(os.path.join(ANNOT_MAGS_DIR, "{mag,[^/]+}." + ANNOT_MAGS_EXT)).mag)
+
 ##################################################
 # EXECUTION
 

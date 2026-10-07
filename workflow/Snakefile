@@ -80,11 +80,38 @@ if "comparison" in config["steps"]:
     ]
 
 
+# MAG ANNOTATIONS (MQ_MAGs_all_0.95)
+# CoverM QC + collation
+if "coverage_check" in config["steps"]:
+    include:
+        "rules/coverm_check.smk"
+    TARGETS += [
+        "status/coverm_check.done"
+    ]
+
+# TRAITS (microtrait)
+if "traits" in config["steps"]:
+    include:
+        "rules/microtrait.smk"
+    TARGETS += [
+        "status/microtrait.done"
+    ]
+
+# AMR (RGI + BacMet)
+if "amr" in config["steps"]:
+    include:
+        "rules/amr.smk"
+    TARGETS += [
+        "status/amr.done"
+    ]
+
+
 # No targets
 if len(TARGETS) == 0:
     raise Exception('You are not serious. Nothing to be done? Really?')
 
 rule all:
+    default_target: True    # otherwise the first included rule is the default target
     input:
         TARGETS
 

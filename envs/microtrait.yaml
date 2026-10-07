@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base=4.3
+  - r-remotes
+  - r-tictoc
+  - r-tidyverse
+  - bioconductor-biostrings
+  - hmmer=3.3.2
+  - prodigal=2.6.3

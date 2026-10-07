@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr"] # USER_INPUT
 
 
 ##################################################
@@ -41,6 +41,18 @@ drep_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/H
 
 # OTU clustering IDs
 cluster_ids: [90, 95, 97, 99]
+
+# MAG annotations: steps "coverage_check", "traits", "amr"
+annotations:
+  # dereplicated MQ MAGs (one FASTA per MAG)
+  mags_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/dereplicated_genomes" # USER_INPUT
+  mags_ext: "fa"
+  # outputs
+  results_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/results" # USER_INPUT
+  # shared databases (CARD -> rgi/, BacMet -> bacmet/); existing files are not re-downloaded
+  dbs_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases" # USER_INPUT
+  # reuse existing prodigal proteins if this file exists, else genes are called (set "" to always call)
+  prodigal_existing: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/prodigal_annotations/{mag}.faa" # USER_INPUT
 
 ##################################################
 # TOOLS & DATA(BASES)
@@ -130,3 +142,30 @@ samtools:
 fastani:
   threads: 48
   largemem_threads: 64
+
+# COVERM QC (existing per-sample genome-mode tables: <sample>_output_coverm.tsv)
+coverm_check:
+  coverm_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/Coverm_output"
+  metadata: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/metadata/SkylineSequenceSheet_250314.tsv"
+  min_covfrac: 0.1    # MAG counted as present if covered fraction >= this
+  max_unmapped: 50    # flag samples with more unmapped reads (%)
+
+# TRAITS
+microtrait:
+  threads: 2
+  genomeset_threads: 16
+
+# AMR
+rgi:
+  threads: 8
+  db_url: "https://card.mcmaster.ca/latest/data"
+  alignment_tool: "DIAMOND"
+  extra: ""           # e.g. "--low_quality" for very fragmented MAGs
+
+bacmet:
+  threads: 8
+  db_url: "http://bacmet.biomedicine.gu.se/download/BacMet2_EXP_database.fasta"
+  map_url: "http://bacmet.biomedicine.gu.se/download/BacMet2_EXP.753.mapping.txt"
+  id: 80
+  qcov: 80
+  evalue: 1e-5

@@ -44,6 +44,30 @@ Key rules in the Snakemake workflow include:
 
 ---
 
+## 🧬 MAG annotations (`annotations` branch)
+
+Steps for the dereplicated MQ MAG set (`MAG_collection/MQ_MAGs_all_0.95/dereplicated_genomes`).
+Turn them on via `steps:` in `config/config.yaml`; paths are under `annotations:`.
+
+| step | rules | output (`annotations.results_dir`) |
+|---|---|---|
+| `coverage_check` | `coverm_check.smk`: collates `MAG_collection/Coverm_output/*_output_coverm.tsv` and checks each holds exactly the dereplicated set. Also checks rel. abundance + unmapped ≈ 100 %, flags high-unmapped samples and undetected MAGs, and matches samples to the sequencing sheet (`dna_tube_num`, else `ceh_sample_code`; repairs the fused `dna_plate_numdna_plate_col` header) | `coverm/`: report, long table, MAG × sample matrices, covered-fraction-masked rel. abundance, summaries |
+| `traits` | `microtrait.smk`: microTrait per MAG, then `make.genomeset.results` | `microtrait/genomeset_results.rds`, `microtrait/tables/*.tsv` |
+| `amr` | `amr.smk`: RGI 6.0.3 (CARD, contigs) and DIAMOND vs BacMet2 EXP (≥80 % id/qcov, e ≤ 1e-5). Reuses `prodigal_annotations/{mag}.faa` if present, else calls genes with Prodigal | `amr/rgi_all.tsv`, `amr/bacmet_all.tsv` |
+
+CARD (`rgi/`, incl. `localDB`) and BacMet (`bacmet/`) are downloaded once into
+`annotations.dbs_dir` by local rules, as is the microTrait install. Run Snakemake from a
+node with internet access.
+
+```bash
+# steps: ["coverage_check", "traits", "amr"] in config/config.yaml
+snakemake --profile workflow/profiles/slurm -n
+snakemake --profile workflow/profiles/slurm --jobs 100 \
+  --conda-prefix /ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/envs
+```
+
+---
+
 ## 🔧 Installation
 
 ### Dependencies
