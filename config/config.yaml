@@ -180,6 +180,7 @@ portraits:
     portraits: "ghcr.io/grp-bork/portraits:v0.2.2"
     recognise: "ghcr.io/grp-bork/recognise:v0.8.0"
     eggnog: "quay.io/biocontainers/eggnog-mapper:2.1.12--pyhdfd78af_2"
+  singularity_tmpdir: "/tmp"   # node-local build space for image pulls (needs a few GB free)
   threads: 32
   mem: "120 GB"
   eggnog_cpus: 16

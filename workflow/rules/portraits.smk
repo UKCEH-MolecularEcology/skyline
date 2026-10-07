@@ -21,7 +21,7 @@ PT_SIFS = {k: os.path.join(PT_SIF_DIR, "{}.sif".format(k)) for k in PT["images"]
 PT_PFAM = os.path.join(ANNOT_DBS_DIR, "pfam/Pfam31.0/Pfam-A.clans.tsv.gz")
 PT_DIR = os.path.join(ANNOT_RESULTS_DIR, "portraits")
 
-localrules: portraits_all, install_portraits, pull_portraits_images, download_pfam_clans, collate_portraits
+localrules: portraits_all, install_portraits, pull_portraits_image, download_pfam_clans, collate_portraits
 
 ###################
 # RULES
@@ -52,21 +52,31 @@ rule install_portraits:
         "mkdir -p {params.dest} && tar -xzf {params.dest}.tar.gz -C {params.dest} --strip-components=1 && "
         "rm {params.dest}.tar.gz && python3 {params.patch} {output.main} && date) &> >(tee {log})"
 
-# Singularity images as local SIFs (local: needs internet)
-rule pull_portraits_images:
+# Singularity images as local SIFs (local: needs internet).
+# One job per image: a failed pull never removes images that already succeeded.
+# Pull into <sif>.tmp and rename only when complete; build space on node-local disk
+# (/ei does not allow the lchown that unpacking needs); retry once.
+rule pull_portraits_image:
     output:
-        expand(os.path.join(PT_SIF_DIR, "{img}.sif"), img=list(PT["images"]))
+        sif=os.path.join(PT_SIF_DIR, "{img}.sif")
     log:
-        os.path.join(ANNOT_RESULTS_DIR, "logs/portraits/pull_images.log")
+        os.path.join(ANNOT_RESULTS_DIR, "logs/portraits/pull_image_{img}.log")
     params:
-        pulls=" ".join("{}={}".format(k, v) for k, v in PT["images"].items()),
-        sif_dir=PT_SIF_DIR
+        uri=lambda wildcards: "docker://" + PT["images"][wildcards.img],
+        build_tmp=lambda wildcards: os.path.join(PT.get("singularity_tmpdir", "/tmp"),
+                                                 "{}_sif_build_{}".format(os.environ.get("USER", "user"), wildcards.img))
+    wildcard_constraints:
+        img="|".join(PT["images"])
     message:
-        "Pulling porTraits Singularity images"
+        "Pulling porTraits image: {wildcards.img}"
     shell:
-        "(date && mkdir -p {params.sif_dir} && "
-        "for kv in {params.pulls}; do k=${{kv%%=*}}; v=${{kv#*=}}; "
-        "[ -s {params.sif_dir}/$k.sif ] || singularity pull {params.sif_dir}/$k.sif docker://$v; done && "
+        "(date && mkdir -p $(dirname {output.sif}) && df -h {params.build_tmp}/.. && "
+        "for attempt in 1 2; do "
+        "rm -rf {params.build_tmp} {output.sif}.tmp && mkdir -p {params.build_tmp} && "
+        "if SINGULARITY_TMPDIR={params.build_tmp} APPTAINER_TMPDIR={params.build_tmp} "
+        "singularity pull {output.sif}.tmp {params.uri}; then break; fi; "
+        "echo \"pull attempt $attempt failed\"; done && "
+        "rm -rf {params.build_tmp} && test -s {output.sif}.tmp && mv {output.sif}.tmp {output.sif} && "
         "date) &> >(tee {log})"
 
 # Pfam 31.0 clan table (matches eggNOG 5.0.2; porTraits' emapper2matrix default)
