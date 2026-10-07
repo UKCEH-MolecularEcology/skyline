@@ -8,7 +8,9 @@ sink(log); sink(log, type = "message")
 suppressPackageStartupMessages(library(microtrait))
 library(tictoc)
 
-rds_files <- unlist(snakemake@input[["rds"]])
+rds_files <- unlist(snakemake@params[["rds"]])
+missing <- rds_files[!file.exists(rds_files)]
+if (length(missing) > 0) stop(length(missing), " rds files missing, e.g. ", missing[1])
 ids <- sub("\\.microtrait\\.rds$", "", basename(rds_files))
 message("Number of rds files: ", length(rds_files))
 

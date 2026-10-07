@@ -55,6 +55,10 @@ Turn them on via `steps:` in `config/config.yaml`; paths are under `annotations:
 | `traits` | `microtrait.smk`: microTrait per MAG, then `make.genomeset.results` | `microtrait/genomeset_results.rds`, `microtrait/tables/*.tsv` |
 | `amr` | `amr.smk`: RGI 6.0.3 (CARD, contigs) and DIAMOND vs BacMet2 EXP (≥80 % id/qcov, e ≤ 1e-5). Reuses `prodigal_annotations/{mag}.faa` if present, else calls genes with Prodigal | `amr/rgi_all.tsv`, `amr/bacmet_all.tsv` |
 
+microTrait, RGI and BacMet run in batches of `annotations.batch_size` MAGs per SLURM job
+(default 100 → ~111 jobs per tool for 11,063 MAGs). Outputs stay per MAG, and MAGs already
+done are skipped, so a rerun after a timeout or failure only processes the missing ones.
+
 CARD (`rgi/`, incl. `localDB`) and BacMet (`bacmet/`) are downloaded once into
 `annotations.dbs_dir` by local rules, as is the microTrait install. Run Snakemake from a
 node with internet access.

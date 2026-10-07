@@ -47,6 +47,8 @@ annotations:
   # dereplicated MQ MAGs (one FASTA per MAG)
   mags_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/dereplicated_genomes" # USER_INPUT
   mags_ext: "fa"
+  # MAGs per SLURM job for microtrait / RGI / BacMet (per-MAG outputs; finished MAGs are skipped on reruns)
+  batch_size: 100
   # outputs
   results_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/results" # USER_INPUT
   # shared databases (CARD -> rgi/, BacMet -> bacmet/); existing files are not re-downloaded
@@ -152,18 +154,18 @@ coverm_check:
 
 # TRAITS
 microtrait:
-  threads: 2
+  threads: 16           # genomes processed in parallel within a batch
   genomeset_threads: 16
 
 # AMR
 rgi:
-  threads: 8
+  threads: 16
   db_url: "https://card.mcmaster.ca/latest/data"
   alignment_tool: "DIAMOND"
   extra: ""           # e.g. "--low_quality" for very fragmented MAGs
 
 bacmet:
-  threads: 8
+  threads: 16
   db_url: "http://bacmet.biomedicine.gu.se/download/BacMet2_EXP_database.fasta"
   map_url: "http://bacmet.biomedicine.gu.se/download/BacMet2_EXP.753.mapping.txt"
   id: 80

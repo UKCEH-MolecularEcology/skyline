@@ -3,11 +3,13 @@ Author: Susheel Bhanu BUSI & Amy Thorpe
 Affiliation: Molecular Ecology group, UKCEH
 Date: [2026-10-07]
 Run: snakemake -s workflow/Snakefile --configfile config/config.yaml --use-conda --cores 4 -rp microtrait_all
-Latest modification: per-MAG jobs (restartable) + genome-set aggregation
+Latest modification: batched (annotations.batch_size MAGs per job, per-MAG rds, finished MAGs skipped)
 Purpose: To run microtrait on the dereplicated MQ MAGs
 """
 
 import os
+
+MT_DIR = os.path.join(ANNOT_RESULTS_DIR, "microtrait/per_genome")
 
 localrules: microtrait_all, install_microtrait
 
@@ -34,33 +36,38 @@ rule install_microtrait:
     script:
         os.path.join(SRC_DIR, "install_microtrait.R")
 
-# microtrait per MAG
-rule microtrait_mag:
+# microtrait on a batch of MAGs -> per_genome/{mag}/{mag}.microtrait.rds
+rule microtrait_batch:
     input:
-        fa=os.path.join(ANNOT_MAGS_DIR, "{mag}." + ANNOT_MAGS_EXT),
+        fa=lambda wildcards: [os.path.join(ANNOT_MAGS_DIR, m + "." + ANNOT_MAGS_EXT) for m in ANNOT_BATCHES[wildcards.batch]],
         installed="status/microtrait_installed.done"
     output:
-        rds=os.path.join(ANNOT_RESULTS_DIR, "microtrait/per_genome/{mag}/{mag}.microtrait.rds")
+        done=os.path.join(ANNOT_RESULTS_DIR, "microtrait/batches/{batch}.done")
     log:
-        out=os.path.join(ANNOT_RESULTS_DIR, "logs/microtrait/{mag}.log")
+        out=os.path.join(ANNOT_RESULTS_DIR, "logs/microtrait/{batch}.log")
+    params:
+        mags=lambda wildcards: ANNOT_BATCHES[wildcards.batch],
+        outdir=MT_DIR
     threads:
         config["microtrait"]["threads"]
     conda:
         os.path.join(ENV_DIR, "microtrait.yaml")
     message:
-        "Running microtrait on {wildcards.mag}"
+        "Running microtrait on {wildcards.batch}"
     script:
-        os.path.join(SRC_DIR, "run_microtrait_genome.R")
+        os.path.join(SRC_DIR, "run_microtrait_batch.R")
 
 # genome-set trait matrices
 rule microtrait_genomeset:
     input:
-        rds=expand(os.path.join(ANNOT_RESULTS_DIR, "microtrait/per_genome/{mag}/{mag}.microtrait.rds"), mag=ANNOT_MAGS)
+        expand(os.path.join(ANNOT_RESULTS_DIR, "microtrait/batches/{batch}.done"), batch=sorted(ANNOT_BATCHES))
     output:
         rds=os.path.join(ANNOT_RESULTS_DIR, "microtrait/genomeset_results.rds"),
         tables=directory(os.path.join(ANNOT_RESULTS_DIR, "microtrait/tables"))
     log:
         out=os.path.join(ANNOT_RESULTS_DIR, "logs/microtrait/genomeset.log")
+    params:
+        rds=[os.path.join(MT_DIR, m, m + ".microtrait.rds") for m in ANNOT_MAGS]
     threads:
         config["microtrait"]["genomeset_threads"]
     conda:

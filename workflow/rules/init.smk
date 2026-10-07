@@ -42,6 +42,12 @@ if "annotations" in config:
     ANNOT_RESULTS_DIR = os.path.abspath(config["annotations"]["results_dir"])  # annotation outputs
     ANNOT_DBS_DIR = os.path.abspath(config["annotations"]["dbs_dir"])          # CARD, BacMet
     ANNOT_MAGS = sorted(glob_wildcards(os.path.join(ANNOT_MAGS_DIR, "{mag,[^/]+}." + ANNOT_MAGS_EXT)).mag)
+    # per-MAG tools run in batches of N MAGs per SLURM job (outputs are still per MAG)
+    ANNOT_BATCH_SIZE = int(config["annotations"].get("batch_size", 100))
+    ANNOT_BATCHES = {
+        "batch{:04d}".format(i // ANNOT_BATCH_SIZE): ANNOT_MAGS[i:i + ANNOT_BATCH_SIZE]
+        for i in range(0, len(ANNOT_MAGS), ANNOT_BATCH_SIZE)
+    }
 
 ##################################################
 # EXECUTION

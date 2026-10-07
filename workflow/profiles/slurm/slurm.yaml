@@ -54,10 +54,10 @@ coverm_check:
   mem: "32G"
   time: "02:00:00"
 
-microtrait_mag:
+microtrait_batch:
   partition: "ei-medium"
-  mem: "8G"
-  time: "04:00:00"
+  mem: "64G"
+  time: "1-00:00:00"
 
 microtrait_genomeset:
   partition: "ei-medium"
@@ -69,17 +69,17 @@ prodigal_mag:
   mem: "4G"
   time: "00:30:00"
 
-rgi_mag:
+rgi_batch:
   partition: "ei-medium"
-  mem: "16G"
-  time: "04:00:00"
+  mem: "32G"
+  time: "2-00:00:00"
 
 bacmet_makedb:
   partition: "ei-medium"
   mem: "4G"
   time: "00:30:00"
 
-bacmet_mag:
+bacmet_batch:
   partition: "ei-medium"
-  mem: "8G"
-  time: "01:00:00"
+  mem: "16G"
+  time: "04:00:00"
