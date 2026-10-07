@@ -4,8 +4,17 @@ channels:
 dependencies:
   - r-base=4.3
   - r-remotes
+  - r-biocmanager
   - r-tictoc
   - r-tidyverse
-  - bioconductor-biostrings
+  - r-rcurl
+  # compiled Bioconductor deps as binaries (Biostrings/GenomeInfoDb come from BiocManager)
+  - bioconductor-biocgenerics
+  - bioconductor-s4vectors
+  - bioconductor-iranges
+  - bioconductor-xvector
   - hmmer=3.3.2
   - prodigal=2.6.3
+  - zlib
+  - compilers
+  - make

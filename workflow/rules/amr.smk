@@ -27,7 +27,8 @@ def faa_for_mag(mag):
 
 RGI_DIR = os.path.join(ANNOT_RESULTS_DIR, "amr/rgi")
 
-localrules: amr_all, download_rgi_db, setup_rgi_db, collate_rgi, download_bacmet, collate_bacmet
+# NOTE: setup_rgi_db is NOT local -- it runs in the RGI container, which can only see /ei on compute nodes
+localrules: amr_all, download_rgi_db, collate_rgi, download_bacmet, collate_bacmet
 
 ###################
 # RULES
@@ -66,8 +67,8 @@ rule setup_rgi_db:
         "status/rgi_setup.done"
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs/amr/setup_rgi_db.log")
-    conda:
-        os.path.join(ENV_DIR, "rgi.yaml")
+    container:
+        config["rgi"]["container"]
     message:
         "Loading the CARD database for RGI"
     shell:
@@ -94,8 +95,8 @@ rule rgi_batch:
         outdir=RGI_DIR,
         aligner=config["rgi"]["alignment_tool"],
         extra=config["rgi"]["extra"]
-    conda:
-        os.path.join(ENV_DIR, "rgi.yaml")
+    container:
+        config["rgi"]["container"]
     message:
         "Running RGI on {wildcards.batch}"
     shell:

@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits"] # USER_INPUT
 
 
 ##################################################
@@ -49,8 +49,10 @@ annotations:
   mags_ext: "fa"
   # MAGs per SLURM job for microtrait / RGI / BacMet (per-MAG outputs; finished MAGs are skipped on reruns)
   batch_size: 100
+  # envs, containers, tools, caches (setup); results go to results_dir
+  work_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus" # USER_INPUT
   # outputs
-  results_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/results" # USER_INPUT
+  results_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations" # USER_INPUT
   # shared databases (CARD -> rgi/, BacMet -> bacmet/); existing files are not re-downloaded
   dbs_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases" # USER_INPUT
   # reuse existing prodigal proteins if this file exists, else genes are called (set "" to always call)
@@ -160,9 +162,28 @@ microtrait:
 # AMR
 rgi:
   threads: 16
+  # official biocontainer (RGI + its prodigal/diamond/blast); run with --use-singularity
+  container: "docker://quay.io/biocontainers/rgi:6.0.3--pyha8f3691_0"
   db_url: "https://card.mcmaster.ca/latest/data"
   alignment_tool: "DIAMOND"
   extra: ""           # e.g. "--low_quality" for very fragmented MAGs
+
+# PORTRAITS (https://github.com/grp-bork/porTraits), run per batch of MAGs
+portraits:
+  repo: "grp-bork/porTraits"
+  commit: "2804b21951f9831a7cb990ea833d91c1ac93fccd"   # v0.2.5 (main, 2026-10-07)
+  models: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits"
+  recognise_markers: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits/recognise_markers"
+  eggnog_db: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog"   # eggNOG 5.0.2
+  pfam_clans_url: "http://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam31.0/Pfam-A.clans.tsv.gz"
+  images:   # pulled once on the software node into <work_dir>/singularity_cache/portraits
+    portraits: "ghcr.io/grp-bork/portraits:v0.2.2"
+    recognise: "ghcr.io/grp-bork/recognise:v0.8.0"
+    eggnog: "quay.io/biocontainers/eggnog-mapper:2.1.12--pyhdfd78af_2"
+  threads: 32
+  mem: "120 GB"
+  eggnog_cpus: 16
+  eggnog_mem: "48 GB"
 
 bacmet:
   threads: 16

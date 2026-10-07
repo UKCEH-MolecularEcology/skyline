@@ -1,6 +1,5 @@
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - rgi=6.0.3
+  - nextflow>=24.10,<25

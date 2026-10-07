@@ -69,6 +69,11 @@ prodigal_mag:
   mem: "4G"
   time: "00:30:00"
 
+setup_rgi_db:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "01:00:00"
+
 rgi_batch:
   partition: "ei-medium"
   mem: "32G"
@@ -83,3 +88,8 @@ bacmet_batch:
   partition: "ei-medium"
   mem: "16G"
   time: "04:00:00"
+
+portraits_batch:
+  partition: "ei-medium"
+  mem: "128G"
+  time: "3-00:00:00"

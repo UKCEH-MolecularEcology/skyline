@@ -97,6 +97,14 @@ if "traits" in config["steps"]:
         "status/microtrait.done"
     ]
 
+# PORTRAITS (phenotypic trait predictions)
+if "portraits" in config["steps"]:
+    include:
+        "rules/portraits.smk"
+    TARGETS += [
+        "status/portraits.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:
