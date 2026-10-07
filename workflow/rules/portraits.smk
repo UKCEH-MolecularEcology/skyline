@@ -70,7 +70,7 @@ rule pull_portraits_image:
     message:
         "Pulling porTraits image: {wildcards.img}"
     shell:
-        "(date && mkdir -p $(dirname {output.sif}) && df -h {params.build_tmp}/.. && "
+        "(date && mkdir -p $(dirname {output.sif}) && df -h $(dirname {params.build_tmp}) && "
         "for attempt in 1 2; do "
         "rm -rf {params.build_tmp} {output.sif}.tmp && mkdir -p {params.build_tmp} && "
         "if SINGULARITY_TMPDIR={params.build_tmp} APPTAINER_TMPDIR={params.build_tmp} "
