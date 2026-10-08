@@ -40,6 +40,7 @@ export TMPDIR="${WORK}/tmp"
 export CONDA_PKGS_DIRS="${WORK}/conda_pkgs"
 export SINGULARITY_CACHEDIR="${WORK}/singularity_cache"
 export APPTAINER_CACHEDIR="${WORK}/singularity_cache"
+export PYTHONNOUSERSITE=1          # ignore ~/.local packages inside conda envs
 export MPLCONFIGDIR="${WORK}/tmp"   # matplotlib cache (RGI) off read-only $HOME
 
 ##############################

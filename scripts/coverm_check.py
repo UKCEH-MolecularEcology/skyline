@@ -40,10 +40,16 @@ files = sorted(a.files) if a.files else sorted(glob.glob(os.path.join(a.coverm_d
 expected = {os.path.basename(f)[: -(len(a.ext) + 1)] for f in glob.glob(os.path.join(a.genomes, f"*.{a.ext}"))}
 log(f"CoverM files: {len(files)} | dereplicated genomes: {len(expected)}")
 
-frames, unmapped, bad_label, genome_issues, multi = [], {}, [], [], []
+frames, unmapped, bad_label, genome_issues, multi, empty = [], {}, [], [], [], []
 for f in files:
     sid = os.path.basename(f).replace("_output_coverm.tsv", "")
-    df = pd.read_csv(f, sep="\t", na_values=["NA"])
+    # empty / header-only tables (failed or truncated CoverM runs) are reported, not fatal
+    try:
+        df = pd.read_csv(f, sep="\t", na_values=["NA"])
+    except pd.errors.EmptyDataError:
+        empty.append(sid); continue
+    if df.shape[0] == 0:
+        empty.append(sid); continue
     gcol, ren, labels = df.columns[0], {}, set()
     # longest metric names first so "Trimmed Mean" isn't caught by "Mean"
     for c in df.columns[1:]:
@@ -73,6 +79,7 @@ metrics = [m for m in METRICS.values() if m in long.columns]
 log(f"Metrics present: {metrics}")
 
 log("\n== File integrity ==")
+log(f"Empty or header-only CoverM files (excluded): {len(empty)} {empty}")
 log(f"Files with more/fewer than one sample in them: {len(multi)} {multi[:5]}")
 log(f"Files whose column label doesn't match the file name: {len(bad_label)} {bad_label[:5]}")
 log(f"Files whose genome set != dereplicated set: {len(genome_issues)}")
