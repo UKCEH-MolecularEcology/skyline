@@ -72,7 +72,7 @@ case "${MODE}" in
                 "${WORK}/singularity_cache/portraits/portraits.sif"
                 "${WORK}/singularity_cache/portraits/recognise.sif"
                 "${WORK}/singularity_cache/portraits/eggnog.sif"
-                "${DBS}/pfam/Pfam31.0/Pfam-A.clans.tsv.gz")
+                "${DBS}/pfam/$(grep -m1 "pfam_release:" config/config.yaml | sed "s/.*: *\"\{0,1\}\([^\" #]*\).*/\1/")/Pfam-A.clans.tsv.gz")
     fi
     # run on the software node (needs internet); everything runs locally, no SLURM submission.
     # Step 1 also pulls the container images; CARD is only downloaded here and loaded

@@ -18,8 +18,12 @@ PT_TOOLS = os.path.join(config["annotations"]["work_dir"], "tools")
 PT_REPO = os.path.join(PT_TOOLS, "porTraits_{}".format(PT["commit"][:7]))
 PT_SIF_DIR = os.path.join(config["annotations"]["work_dir"], "singularity_cache", "portraits")
 PT_SIFS = {k: os.path.join(PT_SIF_DIR, "{}.sif".format(k)) for k in PT["images"]}
-PT_PFAM = os.path.join(ANNOT_DBS_DIR, "pfam/Pfam31.0/Pfam-A.clans.tsv.gz")
+PT_PFAM = os.path.join(ANNOT_DBS_DIR, "pfam", PT.get("pfam_release", "Pfam31.0"), "Pfam-A.clans.tsv.gz")
 PT_DIR = os.path.join(ANNOT_RESULTS_DIR, "portraits")
+# eggNOG-mapper (porTraits' own container: emapper 2.1.12 + eggNOG 5.0.2) run once per batch, split per MAG
+PT_EMAP_DIR = os.path.join(PT_DIR, "eggnog_mapper")
+PT_EGGNOG_MODE = PT.get("eggnog_mode", "batch")      # "batch" (fast) or "per_genome" (porTraits default)
+PT_FAA = config["annotations"].get("prodigal_existing", "")
 
 localrules: portraits_all, install_portraits, pull_portraits_image, download_pfam_clans, collate_portraits
 
@@ -79,7 +83,7 @@ rule pull_portraits_image:
         "rm -rf {params.build_tmp} && test -s {output.sif}.tmp && mv {output.sif}.tmp {output.sif} && "
         "date) &> >(tee {log})"
 
-# Pfam 31.0 clan table (matches eggNOG 5.0.2; porTraits' emapper2matrix default)
+# Pfam clan table: maps eggNOG-mapper Pfam names -> stable PF accessions (the models' features)
 rule download_pfam_clans:
     output:
         PT_PFAM
@@ -88,9 +92,47 @@ rule download_pfam_clans:
     params:
         url=PT["pfam_clans_url"]
     message:
-        "Downloading Pfam 31.0 clan table"
+        "Downloading Pfam clan table ({})".format(PT.get("pfam_release", "Pfam31.0"))
     shell:
         "(date && mkdir -p $(dirname {output}) && wget -q -O {output} {params.url} && date) &> >(tee {log})"
+
+# eggNOG-mapper on all proteins of a batch at once (same container, version and database porTraits uses),
+# DIAMOND database copied to node-local disk; results split into <PT_EMAP_DIR>/<mag>/<mag>.emapper.annotations
+rule eggnog_batch:
+    input:
+        faa=lambda wildcards: [PT_FAA.format(mag=m) for m in ANNOT_BATCHES[wildcards.batch]],
+        sif=PT_SIFS["eggnog"]
+    output:
+        done=os.path.join(PT_EMAP_DIR, "batches", "{batch}.done")
+    log:
+        os.path.join(ANNOT_RESULTS_DIR, "logs/portraits/eggnog_{batch}.log")
+    params:
+        mags=lambda wildcards: " ".join(ANNOT_BATCHES[wildcards.batch]),
+        db=PT["eggnog_db"],
+        outdir=PT_EMAP_DIR,
+        rundir=lambda wildcards: os.path.join(PT_EMAP_DIR, "runs", wildcards.batch),
+        local=lambda wildcards: os.path.join(PT.get("local_tmpdir", "/tmp"), "{}_eggnog_{}".format(os.environ.get("USER", "user"), wildcards.batch)),
+        split=srcdir("../portraits/split_emapper.py"),
+        block=PT.get("eggnog_block_size", 8),
+        chunks=PT.get("eggnog_index_chunks", 1)
+    threads:
+        PT.get("eggnog_batch_threads", 32)
+    message:
+        "eggNOG-mapper (2.1.12 / eggNOG 5.0.2) on {wildcards.batch}"
+    shell:
+        "(date && rm -rf {params.local} && mkdir -p {params.rundir} {params.local} && "
+        "mags=({params.mags}); faas=({input.faa}); "
+        "for i in ${{!mags[@]}}; do "
+        "awk -v m=${{mags[$i]}} '/^>/{{sub(/^>/, \">\" m \"|\")}} {{print}}' ${{faas[$i]}}; "
+        "done > {params.local}/proteins.faa && grep -c '>' {params.local}/proteins.faa && "
+        "cp {params.db}/eggnog_proteins.dmnd {params.local}/ && "
+        "singularity exec {input.sif} emapper.py -i {params.local}/proteins.faa --data_dir {params.db} "
+        "--dmnd_db {params.local}/eggnog_proteins.dmnd -m diamond --dmnd_algo 0 --cpu {threads} "
+        "--block_size {params.block} --index_chunks {params.chunks} "
+        "--temp_dir {params.local} --output_dir {params.rundir} --output {wildcards.batch} --override && "
+        "singularity exec {input.sif} python3 {params.split} --annotations {params.rundir}/{wildcards.batch}.emapper.annotations "
+        "--mags {params.mags} --outdir {params.outdir} && "
+        "rm -rf {params.local} && touch {output.done} && date) &> >(tee {log})"
 
 # porTraits on one batch of MAGs (Nextflow local executor inside this job)
 rule portraits_batch:
@@ -98,7 +140,9 @@ rule portraits_batch:
         fa=lambda wildcards: [os.path.join(ANNOT_MAGS_DIR, m + "." + ANNOT_MAGS_EXT) for m in ANNOT_BATCHES[wildcards.batch]],
         main=rules.install_portraits.output.main,
         sifs=list(PT_SIFS.values()),
-        pfam=PT_PFAM
+        pfam=PT_PFAM,
+        # eggNOG-mapper output of this batch (eggnog_mode "batch"); porTraits then skips its per-genome eggNOG step
+        emapper=lambda wildcards: [os.path.join(PT_EMAP_DIR, "batches", wildcards.batch + ".done")] if PT_EGGNOG_MODE == "batch" else []
     output:
         os.path.join(PT_DIR, "batches/{batch}/collated/portraits_results.tsv.gz")
     log:
@@ -116,7 +160,8 @@ rule portraits_batch:
         sif_portraits=PT_SIFS["portraits"],
         sif_recognise=PT_SIFS["recognise"],
         sif_eggnog=PT_SIFS["eggnog"],
-        max_skip=PT.get("max_skipped_frac", 0.05)
+        max_skip=PT.get("max_skipped_frac", 0.05),
+        emapper_dir=PT_EMAP_DIR if PT_EGGNOG_MODE == "batch" else ""
     threads:
         PT["threads"]
     conda:
@@ -130,7 +175,7 @@ rule portraits_batch:
         "PORTRAITS_CPUS={threads} PORTRAITS_MEM='{params.mem}' "
         "PORTRAITS_EGGNOG_CPUS={params.eggnog_cpus} PORTRAITS_EGGNOG_MEM='{params.eggnog_mem}' "
         "PORTRAITS_SIF_PORTRAITS={params.sif_portraits} PORTRAITS_SIF_RECOGNISE={params.sif_recognise} "
-        "PORTRAITS_SIF_EGGNOG={params.sif_eggnog} && "
+        "PORTRAITS_SIF_EGGNOG={params.sif_eggnog} PORTRAITS_EMAPPER_DIR='{params.emapper_dir}' && "
         "nextflow run {input.main} -c {params.config} -work-dir {params.rundir}/work -resume "
         "--input_dir {params.rundir}/input --output_dir {params.rundir} "
         "--metatraits_models {params.models} --recognise_marker_genes {params.markers} "

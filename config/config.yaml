@@ -175,6 +175,16 @@ portraits:
   models: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits"
   recognise_markers: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits/recognise_markers"
   eggnog_db: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases/eggnog_5.0.2"   # eggNOG 5.0.2 (own copy)
+  # eggNOG-mapper as in porTraits (container emapper 2.1.12 + eggNOG 5.0.2 below), run:
+  #   "batch"      -- once per batch on all its MAGs' proteins (prodigal_existing), split per MAG (fast)
+  #   "per_genome" -- porTraits' own per-genome eggNOG step (very slow at this scale)
+  eggnog_mode: "batch"
+  eggnog_batch_threads: 64      # cores for the batch eggNOG-mapper job
+  eggnog_block_size: 8          # DIAMOND -b: larger = faster, uses more memory (~6-7 GB per unit)
+  eggnog_index_chunks: 1        # DIAMOND -c: 1 = fastest, most memory
+  local_tmpdir: "/tmp"   # node-local disk for the DIAMOND database copy + eggNOG-mapper temp files
+  # Pfam clan table for emapper2matrix (Pfam 31.0 = porTraits default, matches eggNOG 5.0.2)
+  pfam_release: "Pfam31.0"
   pfam_clans_url: "http://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam31.0/Pfam-A.clans.tsv.gz"
   images:   # pulled once on the software node into <work_dir>/singularity_cache/portraits
     portraits: "ghcr.io/grp-bork/portraits:v0.2.2"

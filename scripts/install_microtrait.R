@@ -25,7 +25,7 @@ missing_pkgs <- function(p) p[!vapply(p, requireNamespace, logical(1), quietly =
 deps <- c("R.utils", "RColorBrewer", "ape", "assertthat", "checkmate", "corrplot", "doParallel",
           "dplyr", "foreach", "fs", "futile.logger", "ggplot2", "gtools", "kmed", "lazyeval",
           "magrittr", "nlme", "pheatmap", "readr", "seqinr", "stringr", "tibble", "tictoc",
-          "tidyr", "vegan", "purrr", "matrixStats",
+          "tidyr", "vegan", "purrr", "matrixStats", "testthat",
           "Biostrings", "coRdon", "ComplexHeatmap")
 todo <- missing_pkgs(deps)
 message("Installing ", length(todo), " dependencies: ", paste(todo, collapse = ", "))
