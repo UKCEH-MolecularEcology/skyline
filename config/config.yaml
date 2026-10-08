@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc"] # USER_INPUT
 
 
 ##################################################
@@ -196,6 +196,20 @@ portraits:
   eggnog_cpus: 16
   eggnog_mem: "48 GB"
   max_skipped_frac: 0.05   # batch fails if skipped tasks > 5% of its genomes (work dir kept)
+
+# BGCs (antiSMASH + GECCO), run per batch of MAGs (annotations.batch_size)
+bgc:
+  antismash:
+    image: "antismash/standalone:8.0.4"   # official image, databases included; pulled once on the software node
+    parallel: 8                           # MAGs at a time per batch job
+    cpus_per_mag: 4
+    extra: ""                             # e.g. "--cb-knownclusters --cc-mibig" (slower)
+  gecco:
+    parallel: 4
+    cpus_per_mag: 4
+    extra: ""
+  max_failed_frac: 0.05                   # a batch fails if more than this fraction of its MAGs fail (per tool)
+  singularity_tmpdir: "/tmp"              # node-local build space for the image pull
 
 bacmet:
   threads: 16

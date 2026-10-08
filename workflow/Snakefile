@@ -105,6 +105,14 @@ if "portraits" in config["steps"]:
         "status/portraits.done"
     ]
 
+# BGCs (antiSMASH + GECCO)
+if "bgc" in config["steps"]:
+    include:
+        "rules/bgc.smk"
+    TARGETS += [
+        "status/bgc.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:

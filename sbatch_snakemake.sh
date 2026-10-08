@@ -74,6 +74,9 @@ case "${MODE}" in
                 "${WORK}/singularity_cache/portraits/eggnog.sif"
                 "${DBS}/pfam/$(grep -m1 "pfam_release:" config/config.yaml | sed "s/.*: *\"\{0,1\}\([^\" #]*\).*/\1/")/Pfam-A.clans.tsv.gz")
     fi
+    if grep -q '^steps:.*"bgc"' config/config.yaml; then
+      PT_SETUP+=("${WORK}/singularity_cache/bgc/antismash.sif")
+    fi
     # run on the software node (needs internet); everything runs locally, no SLURM submission.
     # Step 1 also pulls the container images; CARD is only downloaded here and loaded
     # (rgi load, inside the container) as the first cluster job of the run.
