@@ -91,7 +91,7 @@ bacmet_batch:
 
 eggnog_batch:
   partition: "ei-medium"
-  mem: "128G"
+  mem: "192G"
   time: "2-00:00:00"
 
 portraits_batch:

@@ -127,7 +127,7 @@ rule eggnog_batch:
         "done > {params.local}/proteins.faa && grep -c '>' {params.local}/proteins.faa && "
         "cp {params.db}/eggnog_proteins.dmnd {params.local}/ && "
         "singularity exec {input.sif} emapper.py -i {params.local}/proteins.faa --data_dir {params.db} "
-        "--dmnd_db {params.local}/eggnog_proteins.dmnd -m diamond --dmnd_algo 0 --cpu {threads} "
+        "--dmnd_db {params.local}/eggnog_proteins.dmnd -m diamond --dmnd_algo 0 --cpu {threads} --dbmem "
         "--block_size {params.block} --index_chunks {params.chunks} "
         "--temp_dir {params.local} --output_dir {params.rundir} --output {wildcards.batch} --override && "
         "singularity exec {input.sif} python3 {params.split} --annotations {params.rundir}/{wildcards.batch}.emapper.annotations "
