@@ -115,7 +115,8 @@ rule portraits_batch:
         nxf_home=os.path.join(config["annotations"]["work_dir"], "nextflow_home"),
         sif_portraits=PT_SIFS["portraits"],
         sif_recognise=PT_SIFS["recognise"],
-        sif_eggnog=PT_SIFS["eggnog"]
+        sif_eggnog=PT_SIFS["eggnog"],
+        max_skip=PT.get("max_skipped_frac", 0.05)
     threads:
         PT["threads"]
     conda:
@@ -135,7 +136,12 @@ rule portraits_batch:
         "--metatraits_models {params.models} --recognise_marker_genes {params.markers} "
         "--eggnog_db {params.eggnog} --pfam_clade_map {input.pfam} && "
         "(grep 'Error is ignored' .nextflow.log > skipped_tasks.txt || true) && "
-        "echo \"skipped tasks: $(wc -l < skipped_tasks.txt)\" && "
+        "n=$(ls input | wc -l) && s=$(wc -l < skipped_tasks.txt) && "
+        "echo \"skipped tasks: $s (genomes in batch: $n)\" && "
+        # fail (and keep the work dir for debugging) if skipped tasks exceed max_skipped_frac of genomes
+        "if [ $(awk -v s=$s -v n=$n 'BEGIN{{print (s > {params.max_skip} * n) ? 1 : 0}}') -eq 1 ]; then "
+        "echo \"ERROR: too many skipped tasks ($s for $n genomes); work dir kept\"; "
+        "rm -f {output}; exit 1; fi && "
         "rm -rf {params.rundir}/work && date) &> >(tee {log})"
 
 # all batches -> one table

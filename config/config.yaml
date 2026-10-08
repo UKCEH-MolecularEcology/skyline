@@ -174,7 +174,7 @@ portraits:
   commit: "2804b21951f9831a7cb990ea833d91c1ac93fccd"   # v0.2.5 (main, 2026-10-07)
   models: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits"
   recognise_markers: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/portraits/recognise_markers"
-  eggnog_db: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog"   # eggNOG 5.0.2
+  eggnog_db: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases/eggnog_5.0.2"   # eggNOG 5.0.2 (own copy)
   pfam_clans_url: "http://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam31.0/Pfam-A.clans.tsv.gz"
   images:   # pulled once on the software node into <work_dir>/singularity_cache/portraits
     portraits: "ghcr.io/grp-bork/portraits:v0.2.2"
@@ -185,6 +185,7 @@ portraits:
   mem: "120 GB"
   eggnog_cpus: 16
   eggnog_mem: "48 GB"
+  max_skipped_frac: 0.05   # batch fails if skipped tasks > 5% of its genomes (work dir kept)
 
 bacmet:
   threads: 16
