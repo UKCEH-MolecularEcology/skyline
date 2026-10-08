@@ -77,6 +77,9 @@ case "${MODE}" in
     if grep -q '^steps:.*"bgc"' config/config.yaml; then
       PT_SETUP+=("${WORK}/singularity_cache/bgc/antismash.sif")
     fi
+    if grep -q '^steps:.*"bgc_families"' config/config.yaml; then
+      PT_SETUP+=("${DBS}/bigslice/bigslice-models.done")
+    fi
     # run on the software node (needs internet); everything runs locally, no SLURM submission.
     # Step 1 also pulls the container images; CARD is only downloaded here and loaded
     # (rgi load, inside the container) as the first cluster job of the run.

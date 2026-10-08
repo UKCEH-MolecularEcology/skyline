@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families"] # USER_INPUT
 
 
 ##################################################
@@ -210,6 +210,14 @@ bgc:
     extra: ""
   max_failed_frac: 0.05                   # a batch fails if more than this fraction of its MAGs fail (per tool)
   singularity_tmpdir: "/tmp"              # node-local build space for the image pull
+
+# BGC families: BiG-SLiCE 2 on all antiSMASH regions (single job)
+bgc_families:
+  threshold: 0.4          # BiG-SLiCE 2 clustering threshold (cosine distance; default 0.4)
+  threads: 32
+  extra: ""
+  models_url: "https://github.com/medema-group/bigslice/releases/download/v2.0.0rc/bigslice-models.2022-11-30.tar.gz"
+  models_md5: "aaabde911ec107d08e5c24f68aaf31d1"
 
 bacmet:
   threads: 16

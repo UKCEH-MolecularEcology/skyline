@@ -113,6 +113,17 @@ if "bgc" in config["steps"]:
         "status/bgc.done"
     ]
 
+# BGC families (BiG-SLiCE on antiSMASH regions; needs the bgc rules)
+if "bgc_families" in config["steps"]:
+    if "bgc" not in config["steps"]:
+        include:
+            "rules/bgc.smk"
+    include:
+        "rules/bgc_families.smk"
+    TARGETS += [
+        "status/bgc_families.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:

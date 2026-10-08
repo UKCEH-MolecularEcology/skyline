@@ -108,3 +108,13 @@ gecco_batch:
   partition: "ei-medium"
   mem: "32G"
   time: "1-00:00:00"
+
+bigslice_run:
+  partition: "ei-medium"
+  mem: "128G"
+  time: "3-00:00:00"
+
+bigslice_tables:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "04:00:00"
