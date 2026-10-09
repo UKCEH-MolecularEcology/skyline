@@ -3,6 +3,9 @@
  1. main.nf: GTDB-Tk optional (params.skip_gtdbtk)
  2. modules/recognise.nf: MAGs without reCOGnise marker genes get an empty cogs.txt
     (recognise exits 0 but omits it; proteins/genes/gff are written, so all trait predictors still run)
+ 4. bin/emapper2matrix.py: genome id = file name minus ".emapper.annotations" (not "before first dot",
+    which truncates ids like "Bulk_x_bin.132" and makes BacDive-AI/Traitar/MICROPHERRET results unmatchable)
+ 5. bin/collate_results.py: keep all predictions when joining taxonomy (left join instead of inner join)
  3. main.nf: optional precomputed eggNOG-mapper annotations (params.emapper_annotations = directory with
     <id>/<id>.emapper.annotations or <id>.emapper.annotations); eggNOG-mapper only runs for genomes without one
 """
@@ -73,3 +76,20 @@ patch(main_nf,
        "\t\tparams.pfam_clade_map\n"
        "\t)\n"),
       "skyline patch: reuse precomputed annotations")
+
+bin_dir = os.path.join(os.path.dirname(main_nf), "bin")
+patch(os.path.join(bin_dir, "emapper2matrix.py"),
+      ("    name = os.path.basename(path)\n"
+       "    return name.split('.')[0]\n"),
+      ("    name = os.path.basename(path)\n"
+       "    # skyline patch: keep dots in genome ids (strip the eggNOG-mapper suffix only)\n"
+       "    for suffix in ('.emapper.annotations', '.annotations'):\n"
+       "        if name.endswith(suffix):\n"
+       "            return name[:-len(suffix)]\n"
+       "    return name.split('.')[0]\n"),
+      "skyline patch: keep dots in genome ids")
+patch(os.path.join(bin_dir, "collate_results.py"),
+      "\t\tdf = pd.merge(df, tax_df, left_on=\"genome\", right_index=True,)\n",
+      ("\t\t# skyline patch: left join, so predictions are kept for genomes without taxonomy\n"
+       "\t\tdf = pd.merge(df, tax_df, left_on=\"genome\", right_index=True, how=\"left\",)\n"),
+      "skyline patch: left join")
