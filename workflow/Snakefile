@@ -132,6 +132,14 @@ if "merge" in config["steps"]:
         "status/merge.done"
     ]
 
+# COMMUNITY ANALYSIS (R): all annotation sets across compartments, treatments and time scales
+if "community_analysis" in config["steps"]:
+    include:
+        "rules/community_analysis.smk"
+    TARGETS += [
+        "status/community_analysis.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:

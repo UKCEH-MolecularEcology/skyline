@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis"] # USER_INPUT
 
 
 ##################################################
@@ -219,6 +219,14 @@ bgc_families:
   extra: ""
   models_url: "https://github.com/medema-group/bigslice/releases/download/v2.0.0rc/bigslice-models.2022-11-30.tar.gz"
   models_md5: "aaabde911ec107d08e5c24f68aaf31d1"
+
+# COMMUNITY ANALYSIS (R, microTrait env): rhizosphere vs bulk, biochar vs control; seasonal / daily / diel
+# tables -> annotations/analysis_tables/, figures -> annotations/figures/<set>/, report -> figures/community_analysis_report.pdf
+community_analysis:
+  sets: ["microtrait", "portraits", "amr", "bacmet", "bgc", "gcf"]
+  nperm: 999
+  min_mags: 20          # features must be carried by >= this many MAGs (microTrait, AMR, BacMet, BGC classes)
+  granularity: 3        # microTrait trait level
 
 # MERGE: all MAG annotations in one table (annotations/merged/skyline_MAG_annotations.tsv.gz)
 merge:
