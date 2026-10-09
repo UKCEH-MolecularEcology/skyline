@@ -16,7 +16,7 @@ BGC = config["bgc"]
 BGC_DIR = os.path.join(ANNOT_RESULTS_DIR, "bgc")
 BGC_SIF = os.path.join(config["annotations"]["work_dir"], "singularity_cache", "bgc", "antismash.sif")
 
-localrules: bgc_all, pull_antismash_image, collate_antismash, collate_gecco
+localrules: bgc_all, pull_antismash_image, collate_antismash, collate_gecco, bgc_overlap
 
 ###################
 # RULES
@@ -24,7 +24,8 @@ localrules: bgc_all, pull_antismash_image, collate_antismash, collate_gecco
 rule bgc_all:
     input:
         os.path.join(BGC_DIR, "antismash_regions_all.tsv"),
-        os.path.join(BGC_DIR, "gecco_clusters_all.tsv")
+        os.path.join(BGC_DIR, "gecco_clusters_all.tsv"),
+        os.path.join(BGC_DIR, "bgc_overlap.tsv")
     output:
         touch("status/bgc.done")
 
@@ -169,3 +170,25 @@ rule collate_gecco:
                             header = h; out.write("Genome\t" + h)
                         for line in fh:
                             out.write(m + "\t" + line)
+
+
+################### antiSMASH vs GECCO
+# regions/clusters matched by MAG + contig + coordinate overlap
+rule bgc_overlap:
+    input:
+        antismash=os.path.join(BGC_DIR, "antismash_regions_all.tsv"),
+        gecco=os.path.join(BGC_DIR, "gecco_clusters_all.tsv")
+    output:
+        pairs=os.path.join(BGC_DIR, "bgc_overlap.tsv"),
+        summary=os.path.join(BGC_DIR, "bgc_overlap_summary.tsv")
+    log:
+        os.path.join(ANNOT_RESULTS_DIR, "logs/bgc/bgc_overlap.log")
+    params:
+        script=srcdir("../bgc/bgc_overlap.py"),
+        min_bp=BGC.get("overlap_min_bp", 1)
+    message:
+        "Matching antiSMASH regions and GECCO clusters"
+    shell:
+        "(date && python3 {params.script} --antismash {input.antismash} --gecco {input.gecco} "
+        "--out {output.pairs} --summary {output.summary} --min_overlap_bp {params.min_bp} && "
+        "cat {output.summary} && date) &> >(tee {log})"

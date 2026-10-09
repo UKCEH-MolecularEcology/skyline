@@ -209,6 +209,7 @@ bgc:
     cpus_per_mag: 4
     extra: ""
   max_failed_frac: 0.05                   # a batch fails if more than this fraction of its MAGs fail (per tool)
+  overlap_min_bp: 1                       # antiSMASH vs GECCO: minimum overlap (bp) to call a match
   singularity_tmpdir: "/tmp"              # node-local build space for the image pull
 
 # BGC families: BiG-SLiCE 2 on all antiSMASH regions (single job)
