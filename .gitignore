@@ -153,3 +153,7 @@ slurm-**
 *slurm*.out
 *.dot
 *.zip
+
+# R session files
+.RData
+.Rhistory
