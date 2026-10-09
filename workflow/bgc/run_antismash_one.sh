@@ -7,7 +7,7 @@ d=$outdir/$mag
 if [ -s $d/STATUS ] && grep -q '^ok' $d/STATUS; then echo "skip $mag"; exit 0; fi
 rm -rf $d && mkdir -p $(dirname $d)
 if singularity exec $sif antismash --cpus $cpus --genefinding-tool prodigal-m --allow-long-headers \
-     --skip-zip-file --output-dir $d --output-basename $mag $extra $fa > $outdir/$mag.antismash.log 2>&1; then
+     --output-dir $d --output-basename $mag $extra $fa > $outdir/$mag.antismash.log 2>&1; then
   # keep results JSON + per-region GenBank; drop the HTML report (large, per MAG)
   find $d -mindepth 1 -maxdepth 1 ! -name "$mag.json" ! -name '*.region*.gbk' -exec rm -rf {} +
   singularity exec $sif python3 $regions --mag $mag --dir $d --out $d/$mag.regions.tsv \
