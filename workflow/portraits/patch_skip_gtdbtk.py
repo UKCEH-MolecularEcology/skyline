@@ -6,6 +6,8 @@
  4. bin/emapper2matrix.py: genome id = file name minus ".emapper.annotations" (not "before first dot",
     which truncates ids like "Bulk_x_bin.132" and makes BacDive-AI/Traitar/MICROPHERRET results unmatchable)
  5. bin/collate_results.py: keep all predictions when joining taxonomy (left join instead of inner join)
+ 6. modules/eggnog_mapper.nf + modules/collate.nf: call the patched bin/ scripts by absolute path
+    (${projectDir}/bin/...), so the copies on the container's PATH are not used instead
  3. main.nf: optional precomputed eggNOG-mapper annotations (params.emapper_annotations = directory with
     <id>/<id>.emapper.annotations or <id>.emapper.annotations); eggNOG-mapper only runs for genomes without one
 """
@@ -93,3 +95,13 @@ patch(os.path.join(bin_dir, "collate_results.py"),
       ("\t\t# skyline patch: left join, so predictions are kept for genomes without taxonomy\n"
        "\t\tdf = pd.merge(df, tax_df, left_on=\"genome\", right_index=True, how=\"left\",)\n"),
       "skyline patch: left join")
+
+mod_dir = os.path.join(os.path.dirname(main_nf), "portraits", "modules")
+patch(os.path.join(mod_dir, "eggnog_mapper.nf"),
+      "\temapper2matrix.py --input-file",
+      "\tpython3 ${projectDir}/bin/emapper2matrix.py --input-file",
+      "python3 ${projectDir}/bin/emapper2matrix.py")
+patch(os.path.join(mod_dir, "collate.nf"),
+      "\tcollate_results.py -i .",
+      "\tpython3 ${projectDir}/bin/collate_results.py -i .",
+      "python3 ${projectDir}/bin/collate_results.py")
