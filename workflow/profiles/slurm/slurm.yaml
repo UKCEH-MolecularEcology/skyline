@@ -97,7 +97,7 @@ eggnog_batch:
 portraits_batch:
   partition: "ei-medium"
   mem: "128G"
-  time: "3-00:00:00"
+  time: "2-00:00:00"
 
 antismash_batch:
   partition: "ei-medium"
