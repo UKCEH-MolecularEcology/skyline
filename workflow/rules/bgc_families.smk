@@ -102,7 +102,7 @@ rule bigslice_run:
     message:
         "BiG-SLiCE GCF clustering (threshold {})".format(BS["threshold"])
     shell:
-        "(date && bigslice --version . && rm -rf {params.outdir} && "
+        "(date && pip show bigslice pyhmmer | grep -E '^(Name|Version)' && rm -rf {params.outdir} && "
         "bigslice -i {params.indir} {params.outdir} -t {threads} --threshold {params.threshold} "
         "--program_db_folder {params.models} {params.extra} && date) &> >(tee {log})"
 

@@ -7,3 +7,4 @@ dependencies:
   - pip
   - pip:
       - bigslice==2.0.2
+      - pyhmmer<0.11   # BiG-SLiCE 2.0.2 expects bytes names (hit.name.decode()); pyhmmer >= 0.11 returns str
