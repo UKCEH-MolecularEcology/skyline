@@ -124,6 +124,14 @@ if "bgc_families" in config["steps"]:
         "status/bgc_families.done"
     ]
 
+# MERGE: one table with all MAG annotations (run once the other steps are done)
+if "merge" in config["steps"]:
+    include:
+        "rules/merge.smk"
+    TARGETS += [
+        "status/merge.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:

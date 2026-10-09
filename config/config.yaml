@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge"] # USER_INPUT
 
 
 ##################################################
@@ -219,6 +219,10 @@ bgc_families:
   extra: ""
   models_url: "https://github.com/medema-group/bigslice/releases/download/v2.0.0rc/bigslice-models.2022-11-30.tar.gz"
   models_md5: "aaabde911ec107d08e5c24f68aaf31d1"
+
+# MERGE: all MAG annotations in one table (annotations/merged/skyline_MAG_annotations.tsv.gz)
+merge:
+  mt_granularity: 3
 
 bacmet:
   threads: 16

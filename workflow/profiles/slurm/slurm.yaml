@@ -118,3 +118,8 @@ bigslice_tables:
   partition: "ei-medium"
   mem: "64G"
   time: "04:00:00"
+
+merge_annotations:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "04:00:00"
