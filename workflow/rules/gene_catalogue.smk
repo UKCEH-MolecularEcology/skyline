@@ -126,7 +126,7 @@ rule gc_createdb:
     params:
         db=os.path.join(GC_DB, "genes")
     threads:
-        GC["mmseqs"]["threads"]
+        16   # I/O-bound; runs on ei-medium (some nodes have 32 cores)
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
