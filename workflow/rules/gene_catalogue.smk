@@ -127,13 +127,15 @@ rule gc_createdb:
         db=os.path.join(GC_DB, "genes")
     threads:
         4    # createdb is essentially single-threaded (3.5% CPU efficiency at 16)
+    # --shuffle 0: skips createRenumberedDB, a single-threaded sort of all index entries
+    #              (>6 h at 4.4 billion genes); order does not affect exact/linclust results
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
         "Gene catalogue: MMseqs2 database of {} assemblies".format(len(GC_SAMPLES))
     shell:
         "(date && mkdir -p $(dirname {params.db}) && "
-        "mmseqs createdb {input} {params.db} --dbtype 1 && "
+        "mmseqs createdb {input} {params.db} --dbtype 1 --shuffle 0 && "
         "echo \"genes: $(wc -l < {params.db}.index)\" && date) &> >(tee {log})"
 
 # level 100: identical sequences only (hash-based; low memory)
