@@ -6,8 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # USER_INPUT
-
+steps: ["coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # USER_INPUT
 
 ##################################################
 # INPUT
