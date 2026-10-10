@@ -128,3 +128,49 @@ community_analysis:
   partition: "ei-medium"
   mem: "64G"
   time: "12:00:00"
+
+# gene catalogue
+gc_rename:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "06:00:00"
+
+gc_createdb:
+  partition: "ei-largemem"
+  mem: "256G"
+  time: "5-00:00:00"
+
+gc_exact:
+  partition: "ei-largemem"
+  mem: "1000G"
+  time: "7-00:00:00"
+
+gc_linclust:
+  partition: "ei-largemem"
+  mem: "3500G"
+  time: "14-00:00:00"
+
+gc_reps_fasta:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "1-00:00:00"
+
+gc_split_reps:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "1-00:00:00"
+
+gc_rgi_chunk:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "2-00:00:00"
+
+gc_bacmet_chunk:
+  partition: "ei-medium"
+  mem: "16G"
+  time: "06:00:00"
+
+gc_eggnog_chunk:
+  partition: "ei-medium"
+  mem: "96G"
+  time: "3-00:00:00"

@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis"] # USER_INPUT
+steps: ["dereplicate", "comparison"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # USER_INPUT
 
 
 ##################################################
@@ -227,6 +227,39 @@ community_analysis:
   nperm: 999
   min_mags: 20          # features must be carried by >= this many MAGs (microTrait, AMR, BacMet, BGC classes)
   granularity: 3        # microTrait trait level
+
+# GENE CATALOGUE: all genes from short-read (per-sample) and long-read assemblies -> exact dereplication ->
+# cascaded MMseqs2 clustering -> gene-level annotation (RGI, BacMet, eggNOG-mapper v3 / eggNOG 7) of one level
+# outputs: annotations/gene_catalogue/
+gene_catalogue:
+  inputs:            # {name} = one directory level; sample = <prefix>_<name>
+    - prefix: "sr"
+      pattern: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/WGS/per_sample/{name}/annotation/contigs.faa"
+    - prefix: "sr"
+      pattern: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/WGS/per_sample_bulk/{name}/annotation/contigs.faa"
+    - prefix: "lr"
+      pattern: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/data/lr_results_20260202/annotation/{name}/annotation/contigs.faa"
+  exclude: []        # e.g. ["sr_rhizo_d192"]
+  min_length: 0      # drop genes shorter than this (aa); 0 keeps all
+  levels: [99, 95, 90, 70, 50]   # plus exact (100) first
+  annotate_level: 90
+  annotate: ["rgi", "bacmet", "eggnog"]
+  chunk_size: 2000000            # representatives per annotation job
+  mmseqs:
+    threads: 64
+    split_memory_limit: "3000G"  # ei-largemem nodes have ~4 TB
+    coverage: 0.8
+    cov_mode: 1                  # coverage of the member (fragments join longer representatives)
+    extra: ""
+  rgi_threads: 16
+  bacmet_threads: 16
+  local_tmpdir: "/tmp"
+  eggnog:
+    sif: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/singularity_cache/eggnog-mapper-3.0.0-beta6.sif"
+    sif_url: "http://data.cgmlab.org:8080/eggnog-mapper/emapper-3.0/eggnog-mapper-3.0.0-beta6.sif"
+    db: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog_v7"   # eggNOG 7.0.0
+    threads: 32
+    extra: ""
 
 # MERGE: all MAG annotations in one table (annotations/merged/skyline_MAG_annotations.tsv.gz)
 merge:

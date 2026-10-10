@@ -140,6 +140,14 @@ if "community_analysis" in config["steps"]:
         "status/community_analysis.done"
     ]
 
+# GENE CATALOGUE: dereplicated + clustered genes from all assemblies, gene-level annotation
+if "gene_catalogue" in config["steps"]:
+    include:
+        "rules/gene_catalogue.smk"
+    TARGETS += [
+        "status/gene_catalogue.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:
