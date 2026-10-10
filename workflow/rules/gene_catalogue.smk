@@ -18,7 +18,7 @@ Outputs (<annotations>/gene_catalogue/):
     annotation/<L>/{rgi,bacmet,eggnog}_genes.tsv   collated per-representative annotations
 """
 
-import os, glob
+import os, glob, re
 
 GC = config["gene_catalogue"]
 GC_DIR = os.path.join(ANNOT_RESULTS_DIR, "gene_catalogue")
@@ -28,16 +28,26 @@ GC_ANNOT = int(GC["annotate_level"])
 assert GC_ANNOT in GC_LEVELS, "gene_catalogue.annotate_level must be one of the clustering levels"
 
 # ---- input assemblies: one entry per (prefix, path pattern with {name})
+# NOTE: plain glob, not glob_wildcards -- glob_wildcards walks the whole tree below the pattern's
+#       fixed prefix (os.walk), which on project scratch took >30 min at parse time.
+#       '*' matches within one path component, i.e. the same as {name,[^/]+}.
 def gc_find_inputs():
     found = {}
     for src in GC["inputs"]:
-        for name in glob_wildcards(src["pattern"].replace("{name}", "{name,[^/]+}")).name:
-            sample = "{}_{}".format(src["prefix"], name)
+        pat = src["pattern"]
+        parts = [re.escape(p) for p in pat.split("{name}")]
+        rx = re.compile("^" + parts[0] + "(?P<name>[^/]+)" + parts[1]
+                        + "".join("(?P=name)" + p for p in parts[2:]) + "$")
+        for path in sorted(glob.glob(pat.replace("{name}", "*"))):
+            m = rx.match(path)
+            if not m:
+                continue
+            sample = "{}_{}".format(src["prefix"], m.group("name"))
             if sample in GC.get("exclude", []):
                 continue
             if sample in found:
                 raise ValueError("duplicate gene catalogue sample name: " + sample)
-            found[sample] = src["pattern"].format(name=name)
+            found[sample] = path
     return found
 GC_INPUTS = gc_find_inputs()
 GC_SAMPLES = sorted(GC_INPUTS)
@@ -89,7 +99,7 @@ rule gc_rename:
         src=lambda wildcards: os.path.join(GC_DIR, "input", wildcards.sample + ".faa"),
         min_len=GC.get("min_length", 0)
     threads:
-        4
+        2
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     wildcard_constraints:
@@ -310,10 +320,10 @@ rule gc_eggnog_chunk:
     threads:
         GC["eggnog"]["threads"]
     shell:
-        "(date && mkdir -p {params.outdir} {params.tmp} && "
-        "singularity exec {input.sif} emapper.py -i {input.faa} --output_dir {params.outdir} "
+        "(trap 'rm -rf {params.tmp}' EXIT; date && mkdir -p {params.outdir} {params.tmp} && "
+        "singularity exec -B /ei {input.sif} emapper.py -i {input.faa} --output_dir {params.outdir} "
         "-o chunk_{wildcards.chunk} --data_dir {params.db} --cpu {threads} --temp_dir {params.tmp} --override {params.extra} && "
-        "rm -rf {params.tmp} && date) &> >(tee {log})"
+        "date) &> >(tee {log})"
 
 # collate per-chunk outputs (one header)
 def gc_chunk_files(tool, ext):

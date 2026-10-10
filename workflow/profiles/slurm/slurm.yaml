@@ -136,8 +136,8 @@ gc_rename:
   time: "06:00:00"
 
 gc_createdb:
-  partition: "ei-largemem"
-  mem: "256G"
+  partition: "ei-medium"   # createdb streams the inputs; low memory
+  mem: "32G"
   time: "5-00:00:00"
 
 gc_exact:

@@ -255,7 +255,7 @@ gene_catalogue:
   bacmet_threads: 16
   local_tmpdir: "/tmp"
   eggnog:
-    sif: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/annotations/susbus/singularity_cache/eggnog-mapper-3.0.0-beta6.sif"
+    sif: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog_v7/eggnog-mapper-3.0.0-beta6.sif"   # shared copy next to the DB (exists -> setup skips the download)
     sif_url: "http://data.cgmlab.org:8080/eggnog-mapper/emapper-3.0/eggnog-mapper-3.0.0-beta6.sif"
     db: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog_v7"   # eggNOG 7.0.0
     threads: 32
