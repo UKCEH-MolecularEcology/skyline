@@ -239,7 +239,7 @@ gene_catalogue:
     - prefix: "lr"
       pattern: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/data/lr_results_20260202/annotation/{name}/annotation/contigs.faa"
   exclude: []        # e.g. ["sr_rhizo_d192"]
-  min_length: 0      # drop genes shorter than this (aa); 0 keeps all
+  min_length: 50     # drop genes shorter than this (aa); 0 keeps all. 50 -> ~3.95 billion genes (MMseqs2 IDs are 32-bit: max ~4.29 billion; all genes = 4.44 billion)
   levels: [99, 95, 90, 70, 50]   # plus exact (100) first
   annotate_level: 90
   annotate: ["rgi", "bacmet", "eggnog"]
