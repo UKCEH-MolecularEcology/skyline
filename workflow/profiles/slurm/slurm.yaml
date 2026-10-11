@@ -31,8 +31,10 @@ create_lists:
   time: "02:00:00"
 
 compare_skyline_smag:
-  partition: "ei-medium"
-  c: 48
+  partition: "ei-largemem"
+  nodes: 1
+  cpus-per-task: 64
+  mem: "1024G"
   time: "12:00:00"
 
 compare_skyline_globdb:
