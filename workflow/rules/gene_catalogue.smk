@@ -139,7 +139,7 @@ rule gc_createdb:
         "mmseqs createdb {input} {params.db} --dbtype 1 --shuffle 0 --write-lookup 0 --threads {threads} && "
         "echo \"genes: $(wc -l < {params.db}.index)\" && date) &> >(tee {log})"
 
-# level 100: identical sequences only (hash-based; low memory)
+# level 100: identical sequences only (hash-based)
 rule gc_exact:
     input:
         rules.gc_createdb.output
@@ -159,8 +159,13 @@ rule gc_exact:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
         "Gene catalogue: exact dereplication (100%)"
+    # clusthash (~3.5 h at 4 billion genes) is skipped on a rerun if it already completed;
+    # clust (set cover) holds the whole hash graph in memory (~1 TB at 4 billion genes)
     shell:
-        "(date && mmseqs clusthash {params.db} {params.hash} --min-seq-id 1.0 --threads {threads} && "
+        "(date && "
+        "if [ -e {params.hash}.dbtype ]; then echo \"reusing existing {params.hash}\"; "
+        "else mmseqs clusthash {params.db} {params.hash} --min-seq-id 1.0 --threads {threads}; fi && "
+        "rm -f {params.clu} {params.clu}.index {params.clu}.dbtype {params.clu}.[0-9]* && "
         "mmseqs clust {params.db} {params.hash} {params.clu} --threads {threads} && "
         "mmseqs createsubdb {params.clu} {params.db} {params.reps} --subdb-mode 1 && "
         "mmseqs createtsv {params.db} {params.db} {params.clu} {params.clu}.tsv --threads {threads} && "

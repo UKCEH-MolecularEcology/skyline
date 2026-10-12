@@ -144,7 +144,7 @@ gc_createdb:
 
 gc_exact:
   partition: "ei-largemem"
-  mem: "1000G"
+  mem: "2500G"   # clust OOM at 1000G (956 GB used) with 3.95 billion genes / 3.04 billion unique
   time: "7-00:00:00"
 
 gc_linclust:
