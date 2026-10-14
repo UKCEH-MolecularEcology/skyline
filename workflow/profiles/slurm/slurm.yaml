@@ -174,5 +174,5 @@ gc_bacmet_chunk:
 
 gc_eggnog_chunk:
   partition: "ei-medium"
-  mem: "96G"
+  mem: "256G"
   time: "3-00:00:00"
