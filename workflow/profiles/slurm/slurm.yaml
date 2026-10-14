@@ -154,7 +154,7 @@ gc_linclust:
 
 gc_reps_fasta:
   partition: "ei-largemem"
-  mem: "32G"
+  mem: "480G"
   time: "1-00:00:00"
 
 gc_split_reps:
