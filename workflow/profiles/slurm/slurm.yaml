@@ -175,4 +175,4 @@ gc_bacmet_chunk:
 gc_eggnog_chunk:
   partition: "ei-medium"
   mem: "360G"   # fits every ei-medium node (380 GB); test chunk peaked at 148 GB
-  time: "3-00:00:00"
+  time: "12:00:00"
