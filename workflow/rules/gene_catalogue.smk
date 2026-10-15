@@ -327,10 +327,25 @@ rule gc_eggnog_chunk:
         extra=GC["eggnog"].get("extra", "")
     threads:
         GC["eggnog"]["threads"]
+    # eggNOG annotation databases are copied to node-local {params.tmp}/db: SQLite lookups over NFS
+    # made every annotation worker time out (2 s/seed limit). The DIAMOND db stays on NFS (symlink).
+    # If a previous attempt already finished the DIAMOND search, its seed_orthologs are reused
+    # (kept as .seed_orthologs.keep so --override cannot remove them) and only annotation runs.
     shell:
-        "(trap 'rm -rf {params.tmp}' EXIT; date && mkdir -p {params.outdir} {params.tmp} && "
-        "singularity exec -B /ei {input.sif} emapper.py -i {input.faa} --output_dir {params.outdir} "
-        "-o chunk_{wildcards.chunk} --data_dir {params.db} --cpu {threads} --temp_dir {params.tmp} --override {params.extra} && "
+        "(set -e; trap 'rm -rf {params.tmp}' EXIT; date; "
+        "mkdir -p {params.outdir} {params.tmp}/db {params.tmp}/work; "
+        "for f in {params.db}/*; do case $(basename $f) in "
+        "mmseqs|*.sif|eggnog_proteins.dmnd|download.*) ;; *) cp -r $f {params.tmp}/db/ ;; esac; done; "
+        "ln -s {params.db}/eggnog_proteins.dmnd {params.tmp}/db/; "
+        "echo \"local eggNOG db: $(du -sh {params.tmp}/db | cut -f1)\"; date; "
+        "S={params.outdir}/chunk_{wildcards.chunk}.emapper.seed_orthologs; "
+        "if [ -s $S ]; then mv $S $S.keep; fi; "
+        "if [ -s $S.keep ]; then echo \"reusing DIAMOND hits: $S.keep\"; "
+        "MODE=\"-m no_search --annotate_hits_table $S.keep\"; "
+        "else MODE=\"-i {input.faa}\"; fi; "
+        "singularity exec -B /ei {input.sif} emapper.py $MODE --output_dir {params.outdir} "
+        "-o chunk_{wildcards.chunk} --data_dir {params.tmp}/db --cpu {threads} --temp_dir {params.tmp}/work "
+        "--override {params.extra}; "
         "date) &> >(tee {log})"
 
 # collate per-chunk outputs (one header)
