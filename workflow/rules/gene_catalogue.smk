@@ -52,6 +52,11 @@ def gc_find_inputs():
 GC_INPUTS = gc_find_inputs()
 GC_SAMPLES = sorted(GC_INPUTS)
 GC_DB = os.path.join(GC_DIR, "db")
+GC_TOOLS = [t for t in ["rgi", "bacmet", "eggnog"] if t in GC.get("annotate", ["rgi", "bacmet", "eggnog"])]
+# levels that inherit the annotations of the annotated level (default: every clustering level except exact)
+GC_PROP = [int(l) for l in GC.get("propagate_levels", [l for l in GC_LEVELS if l not in (100, GC_ANNOT)])]
+assert all(l in GC_LEVELS and l != GC_ANNOT for l in GC_PROP), \
+    "gene_catalogue.propagate_levels must be clustering levels other than annotate_level"
 
 localrules: gene_catalogue_all, gc_link_inputs, gc_summary, gc_download_eggnog_sif
 
@@ -61,8 +66,8 @@ localrules: gene_catalogue_all, gc_link_inputs, gc_summary, gc_download_eggnog_s
 rule gene_catalogue_all:
     input:
         os.path.join(GC_DIR, "clusters", "summary.tsv"),
-        expand(os.path.join(GC_DIR, "annotation", str(GC_ANNOT), "{tool}_genes.tsv"),
-               tool=[t for t in ["rgi", "bacmet", "eggnog"] if t in GC.get("annotate", ["rgi", "bacmet", "eggnog"])])
+        expand(os.path.join(GC_DIR, "annotation", str(GC_ANNOT), "{tool}_genes.tsv"), tool=GC_TOOLS),
+        expand(os.path.join(GC_DIR, "annotation", "{level}", "{tool}_reps.tsv.gz"), level=GC_PROP, tool=GC_TOOLS)
     output:
         touch("status/gene_catalogue.done")
 
@@ -378,3 +383,46 @@ rule gc_collate_eggnog:
         os.path.join(GC_DIR, "annotation", "{level}", "eggnog_genes.tsv")
     shell:
         "awk '/^##/ {{ next }} /^#query/ {{ if (h++) next; sub(/^#/, \"\") }} {{ print }}' {input} > {output}"
+
+
+################### annotations at the other levels (inherited from the annotated level)
+# below annotate_level (70, 50): the representatives are annotated representatives -> their rows
+# above annotate_level (95, 99, 100): rep_<level> -> its annotated representative (through the cluster chain)
+#   + that representative's annotation; also writes annotation/<level>/reps_to_<annotate_level>.tsv.gz
+def gc_prop_clusters(wildcards):
+    l = int(wildcards.level)
+    lv = [l] if l < GC_ANNOT else [x for x in GC_LEVELS if GC_ANNOT <= x < l]
+    return [os.path.join(GC_DIR, "clusters", "clusters_{}.tsv.gz".format(x)) for x in lv]
+
+rule gc_propagate:
+    input:
+        clusters=gc_prop_clusters,
+        ann=expand(os.path.join(GC_DIR, "annotation", str(GC_ANNOT), "{tool}_genes.tsv"), tool=GC_TOOLS)
+    output:
+        expand(os.path.join(GC_DIR, "annotation", "{{level}}", "{tool}_reps.tsv.gz"), tool=GC_TOOLS)
+    log:
+        os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue", "propagate_{level}.log")
+    params:
+        script=os.path.join(SRC_DIR, "gc_propagate.py"),
+        levels=",".join(str(l) for l in GC_LEVELS),
+        tools=",".join(GC_TOOLS),
+        clusters_dir=os.path.join(GC_DIR, "clusters"),
+        annot_dir=os.path.join(GC_DIR, "annotation", str(GC_ANNOT)),
+        out_dir=lambda wildcards: os.path.join(GC_DIR, "annotation", wildcards.level),
+        memory=GC.get("propagate_memory", "300GB"),
+        tmp=lambda wildcards: os.path.join(GC.get("local_tmpdir", "/tmp"), "{}_gc_propagate_{}".format(os.environ.get("USER", "user"), wildcards.level))
+    threads:
+        GC.get("propagate_threads", 32)
+    conda:
+        os.path.join(ENV_DIR, "duckdb.yaml")
+    wildcard_constraints:
+        level="|".join(str(l) for l in GC_PROP) if GC_PROP else "NONE"
+    message:
+        "Gene catalogue: level-{wildcards.level} annotations inherited from level " + str(GC_ANNOT)
+    shell:
+        "(trap 'rm -rf {params.tmp}' EXIT; date && "
+        "python {params.script} --level {wildcards.level} --annot-level " + str(GC_ANNOT) + " "
+        "--levels {params.levels} --clusters-dir {params.clusters_dir} --annot-dir {params.annot_dir} "
+        "--tools {params.tools} --out-dir {params.out_dir} --tmp {params.tmp} "
+        "--threads {threads} --memory {params.memory} && date) &> >(tee {log})"
+

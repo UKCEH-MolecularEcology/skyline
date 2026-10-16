@@ -243,6 +243,9 @@ gene_catalogue:
   levels: [99, 95, 90, 70, 50]   # plus exact (100) first
   annotate_level: 90
   annotate: ["rgi", "bacmet", "eggnog"]
+  propagate_levels: [99, 95, 70, 50]   # levels that inherit the annotate_level annotations (add 100 for exact-duplicate reps; very large)
+  propagate_threads: 32
+  propagate_memory: "300GB"           # DuckDB memory limit; spills the rest to local_tmpdir
   chunk_size: 2000000            # representatives per annotation job
   mmseqs:
     threads: 64
