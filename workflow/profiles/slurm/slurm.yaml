@@ -186,3 +186,61 @@ gc_propagate:
   partition: "ei-medium"
   mem: "360G"    # DuckDB limited to propagate_memory (300GB); spills to node-local /tmp
   time: "2-00:00:00"
+
+
+# ---- gene catalogue, all genes (64-bit MMseqs2): same as gc_* unless noted
+
+gca_rename:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "06:00:00"
+
+gca_createdb:
+  partition: "ei-medium"
+  mem: "256G"   # 64-bit keys, valid IDs: the 3.95 B run peaked at 15.6 GB
+  time: "3-00:00:00"
+
+gca_exact:
+  partition: "ei-largemem"
+  mem: "3500G"  # clust on ~4.4 B genes; the 3.95 B run needed >1 TB
+  time: "7-00:00:00"
+
+gca_linclust:
+  partition: "ei-largemem"
+  mem: "3800G"
+  time: "14-00:00:00"
+
+gca_reps_fasta:
+  partition: "ei-medium"
+  mem: "480G"
+  time: "1-00:00:00"
+
+gca_split_reps:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "1-00:00:00"
+
+gca_rgi_chunk:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "2-00:00:00"
+
+gca_bacmet_chunk:
+  partition: "ei-medium"
+  mem: "16G"
+  time: "06:00:00"
+
+gca_eggnog_chunk:
+  partition: "ei-medium"
+  mem: "360G"   # fits every ei-medium node (380 GB); test chunk peaked at 148 GB
+  time: "12:00:00"
+
+gca_collate_eggnog:
+  partition: "ei-medium"
+  time: "1-00:00:00"
+  mem: "256G"
+
+gca_propagate:
+  partition: "ei-medium"
+  mem: "360G"    # DuckDB limited to propagate_memory (300GB); spills to node-local /tmp
+  time: "2-00:00:00"

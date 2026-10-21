@@ -6,7 +6,7 @@
 # STEPS
 
 # Steps to be done
-steps: ["coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # USER_INPUT
+steps: ["coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue"] # OPTIONS: [ "extract", "cluster", "bin_info", "dereplicate", "comparison", "coverage_check", "traits", "amr", "portraits", "bgc", "bgc_families", "merge", "community_analysis", "gene_catalogue", "gene_catalogue_all_genes"] # USER_INPUT
 
 ##################################################
 # INPUT
@@ -262,6 +262,14 @@ gene_catalogue:
     db: "/ei/.project-scratch/0/0e51ef86-0156-4e79-ad12-c5411c0a5496/databases/eggnog_v7"   # eggNOG 7.0.0
     threads: 32
     extra: ""
+
+
+# GENE CATALOGUE, ALL GENES: second catalogue without the length filter, using the 64-bit-key MMseqs2 build
+# (the standard build wraps database IDs above 2^32 ~ 4.29 billion entries; MMseqs2 issue #1154).
+# Every key not given here is taken from 'gene_catalogue' above. Outputs: <annotations>/gene_catalogue_all_genes/
+gene_catalogue_all_genes:
+  min_length: 0
+  mmseqs_bin: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases/mmseqs_64bit/mmseqs/bin/mmseqs"   # from mmseqs-linux-avx2-64bit.tar.gz
 
 # MERGE: all MAG annotations in one table (annotations/merged/skyline_MAG_annotations.tsv.gz)
 merge:

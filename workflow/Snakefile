@@ -148,6 +148,14 @@ if "gene_catalogue" in config["steps"]:
         "status/gene_catalogue.done"
     ]
 
+# GENE CATALOGUE, ALL GENES (no length filter; 64-bit-key MMseqs2)
+if "gene_catalogue_all_genes" in config["steps"]:
+    include:
+        "rules/gene_catalogue_all_genes.smk"
+    TARGETS += [
+        "status/gene_catalogue_all_genes.done"
+    ]
+
 # AMR (RGI + BacMet)
 if "amr" in config["steps"]:
     include:
