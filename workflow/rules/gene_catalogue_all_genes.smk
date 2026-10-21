@@ -9,6 +9,9 @@ Purpose: Second gene catalogue that keeps ALL genes (no length filter), built wi
          Same workflow as rules/gene_catalogue.smk (exact -> 99/95/90/70/50 linclust -> RGI/BacMet/eggNOG on the
          annotated level -> inherited annotations at the other levels); rule names gca_*, outputs in
          <annotations>/gene_catalogue_all_genes/, logs in logs/gene_catalogue_all_genes/.
+Disk: intermediates are removed as soon as nothing needs them (renamed/ after createdb; hash and per-level clustering
+      DBs after each level; a level's representative DB once the next level is built; per-chunk annotation outputs after
+      collation). db/ (sequence + header DBs, ~1 TB) is removed at the end unless gene_catalogue_all_genes.keep_db: true.
 Config: section 'gene_catalogue_all_genes' overrides 'gene_catalogue' key by key (min_length 0, mmseqs_bin, ...).
 """
 
@@ -76,6 +79,16 @@ rule gene_catalogue_all_genes_all:
         expand(os.path.join(GCA_DIR, "annotation", "{level}", "{tool}_reps.tsv.gz"), level=GCA_PROP, tool=GCA_TOOLS)
     output:
         touch("status/gene_catalogue_all_genes.done")
+    params:
+        db=GCA_DB,
+        tmp=os.path.join(GCA_DIR, "tmp"),
+        keep_db=GCA.get("keep_db", False)
+    run:
+        import shutil
+        if not params.keep_db:
+            for d in (params.db, params.tmp):
+                if os.path.isdir(d):
+                    shutil.rmtree(d)
 
 
 ################### inputs
@@ -84,7 +97,7 @@ rule gca_link_inputs:
     output:
         manifest=os.path.join(GCA_DIR, "input", "manifest.tsv")
     message:
-        "Gene catalogue (all genes) (all genes): linking {} assemblies".format(len(GCA_SAMPLES))
+        "Gene catalogue (all genes): linking {} assemblies".format(len(GCA_SAMPLES))
     run:
         d = os.path.dirname(output.manifest)
         os.makedirs(d, exist_ok=True)
@@ -102,7 +115,7 @@ rule gca_rename:
     input:
         manifest=rules.gca_link_inputs.output.manifest
     output:
-        faa=os.path.join(GCA_DIR, "renamed", "{sample}.faa.gz"),
+        faa=temp(os.path.join(GCA_DIR, "renamed", "{sample}.faa.gz")),   # deleted once createdb has read it
         n_genes=os.path.join(GCA_DIR, "renamed", "{sample}.count")
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "rename_{sample}.log")
@@ -116,7 +129,7 @@ rule gca_rename:
     wildcard_constraints:
         sample="|".join(GCA_SAMPLES) if GCA_SAMPLES else "NONE"
     message:
-        "Gene catalogue (all genes) (all genes): unique IDs for {wildcards.sample}"
+        "Gene catalogue (all genes): unique IDs for {wildcards.sample}"
     shell:
         "(date && awk -v s={wildcards.sample} -v m={params.min_len} -v c={output.n_genes} '"
         "function flush() {{ if (id != \"\" && length(seq) >= m) {{ print \">\" s \"|\" id; print seq; n++ }} }} "
@@ -131,7 +144,8 @@ rule gca_createdb:
     input:
         expand(os.path.join(GCA_DIR, "renamed", "{sample}.faa.gz"), sample=GCA_SAMPLES)
     output:
-        os.path.join(GCA_DB, "genes.dbtype")
+        dbtype=temp(os.path.join(GCA_DB, "genes.dbtype")),
+        n_genes=os.path.join(GCA_DIR, "clusters", "genes.count")
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "createdb.log")
     params:
@@ -140,23 +154,25 @@ rule gca_createdb:
         4    # createdb is essentially single-threaded (3.5% CPU efficiency at 16)
     # --shuffle 0: skips createRenumberedDB (single-threaded renumbering of every entry)
     # --write-lookup 0: the .lookup is not used downstream (names come from genes_h)
-    # NB MMseqs2 IDs are 32-bit: keep total genes < ~4.29 billion (gene_catalogue.min_length)
+    # 64-bit-key MMseqs2 build (mmseqs_bin): no 2^32 limit on the number of genes
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
-        "Gene catalogue (all genes) (all genes): MMseqs2 database of {} assemblies".format(len(GCA_SAMPLES))
+        "Gene catalogue (all genes): MMseqs2 database of {} assemblies".format(len(GCA_SAMPLES))
     shell:
         "(date && mkdir -p $(dirname {params.db}) && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} createdb {input} {params.db} --dbtype 1 --shuffle 0 --write-lookup 0 --threads {threads} && "
-        "echo \"genes: $(wc -l < {params.db}.index)\" && date) &> >(tee {log})"
+        "wc -l < {params.db}.index > {output.n_genes} && "
+        "echo \"genes: $(cat {output.n_genes})\" && date) &> >(tee {log})"
 
 # level 100: identical sequences only (hash-based)
 rule gca_exact:
     input:
-        rules.gca_createdb.output
+        rules.gca_createdb.output.dbtype
     output:
-        reps=os.path.join(GCA_DB, "reps_100.dbtype"),
-        tsv=os.path.join(GCA_DIR, "clusters", "clusters_100.tsv.gz")
+        reps=temp(os.path.join(GCA_DB, "reps_100.dbtype")),
+        tsv=os.path.join(GCA_DIR, "clusters", "clusters_100.tsv.gz"),
+        n_reps=os.path.join(GCA_DIR, "clusters", "reps_100.count")
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "cluster_100.log")
     params:
@@ -169,7 +185,7 @@ rule gca_exact:
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
-        "Gene catalogue (all genes) (all genes): exact dereplication (100%)"
+        "Gene catalogue (all genes): exact dereplication (100%)"
     # clusthash (~3.5 h at 4 billion genes) is skipped on a rerun if it already completed;
     # clust (set cover) holds the whole hash graph in memory (~1 TB at 4 billion genes)
     shell:
@@ -178,18 +194,22 @@ rule gca_exact:
         "else {config[gene_catalogue_all_genes][mmseqs_bin]} clusthash {params.db} {params.hash} --min-seq-id 1.0 --threads {threads}; fi && "
         "rm -f {params.clu} {params.clu}.index {params.clu}.dbtype {params.clu}.[0-9]* && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} clust {params.db} {params.hash} {params.clu} --threads {threads} && "
+        "rm -f {params.hash} {params.hash}.index {params.hash}.dbtype {params.hash}.[0-9]* && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} createsubdb {params.clu} {params.db} {params.reps} --subdb-mode 1 && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} createtsv {params.db} {params.db} {params.clu} {params.clu}.tsv --threads {threads} && "
         "pigz -p {threads} -c {params.clu}.tsv > {output.tsv} && rm {params.clu}.tsv && "
-        "echo \"representatives: $(wc -l < {params.reps}.index)\" && date) &> >(tee {log})"
+        "rm -f {params.clu} {params.clu}.index {params.clu}.dbtype {params.clu}.[0-9]* && "
+        "wc -l < {params.reps}.index > {output.n_reps} && "
+        "echo \"representatives: $(cat {output.n_reps})\" && date) &> >(tee {log})"
 
 # levels < 100: linclust on the previous level's representatives
 rule gca_linclust:
     input:
         lambda wildcards: os.path.join(GCA_DB, "reps_{}.dbtype".format(GCA_PREV[int(wildcards.level)]))
     output:
-        reps=os.path.join(GCA_DB, "reps_{level}.dbtype"),
-        tsv=os.path.join(GCA_DIR, "clusters", "clusters_{level}.tsv.gz")
+        reps=temp(os.path.join(GCA_DB, "reps_{level}.dbtype")),
+        tsv=os.path.join(GCA_DIR, "clusters", "clusters_{level}.tsv.gz"),
+        n_reps=os.path.join(GCA_DIR, "clusters", "reps_{level}.count")
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "cluster_{level}.log")
     wildcard_constraints:
@@ -203,13 +223,16 @@ rule gca_linclust:
         cov=GCA["mmseqs"]["coverage"],
         cov_mode=GCA["mmseqs"]["cov_mode"],
         mem=GCA["mmseqs"]["split_memory_limit"],
-        extra=GCA["mmseqs"].get("extra", "")
+        extra=GCA["mmseqs"].get("extra", ""),
+        # the previous level's representative DB is only needed by this level -- except the annotated level's,
+        # which gca_reps_fasta also reads (left in place; small)
+        drop_prev=lambda wildcards: "" if GCA_PREV[int(wildcards.level)] == GCA_ANNOT else "yes"
     threads:
         GCA["mmseqs"]["threads"]
     conda:
         os.path.join(ENV_DIR, "mmseqs2.yaml")
     message:
-        "Gene catalogue (all genes) (all genes): clustering at {wildcards.level}% identity"
+        "Gene catalogue (all genes): clustering at {wildcards.level}% identity"
     shell:
         "(date && rm -rf {params.tmp} && mkdir -p {params.tmp} && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} linclust {params.prev} {params.clu} {params.tmp} --min-seq-id {params.ident} -c {params.cov} "
@@ -217,23 +240,27 @@ rule gca_linclust:
         "{config[gene_catalogue_all_genes][mmseqs_bin]} createsubdb {params.clu} {params.prev} {params.reps} --subdb-mode 1 && "
         "{config[gene_catalogue_all_genes][mmseqs_bin]} createtsv {params.prev} {params.prev} {params.clu} {params.clu}.tsv --threads {threads} && "
         "pigz -p {threads} -c {params.clu}.tsv > {output.tsv} && rm {params.clu}.tsv && rm -rf {params.tmp} && "
-        "echo \"representatives: $(wc -l < {params.reps}.index)\" && date) &> >(tee {log})"
+        "rm -f {params.clu} {params.clu}.index {params.clu}.dbtype {params.clu}.[0-9]* && "
+        "wc -l < {params.reps}.index > {output.n_reps} && "
+        "if [ -n \"{params.drop_prev}\" ]; then rm -f {params.prev} {params.prev}.index {params.prev}.dbtype "
+        "{params.prev}_h {params.prev}_h.index {params.prev}_h.dbtype; fi && "
+        "echo \"representatives: $(cat {output.n_reps})\" && date) &> >(tee {log})"
 
 rule gca_summary:
     input:
-        genes=rules.gca_createdb.output,
-        reps=expand(os.path.join(GCA_DB, "reps_{level}.dbtype"), level=GCA_LEVELS)
+        genes=rules.gca_createdb.output.n_genes,
+        reps=expand(os.path.join(GCA_DIR, "clusters", "reps_{level}.count"), level=GCA_LEVELS)
     output:
         os.path.join(GCA_DIR, "clusters", "summary.tsv")
     message:
-        "Gene catalogue (all genes) (all genes): summary"
+        "Gene catalogue (all genes): summary"
     run:
-        n = lambda p: sum(1 for _ in open(p[:-len(".dbtype")] + ".index"))
+        n = lambda p: int(open(p).read().strip())
         with open(output[0], "w") as out:
             out.write("level\trepresentatives\tclustering_input\n")
-            out.write("genes\t{}\t\n".format(n(input.genes[0])))
+            out.write("genes\t{}\t\n".format(n(input.genes)))
             for l in GCA_LEVELS:
-                out.write("{}\t{}\t{}\n".format(l, n(os.path.join(GCA_DB, "reps_{}.dbtype".format(l))),
+                out.write("{}\t{}\t{}\n".format(l, n(os.path.join(GCA_DIR, "clusters", "reps_{}.count".format(l))),
                                                 "genes" if l == 100 else "reps_{}".format(GCA_PREV[l])))
 
 
@@ -276,7 +303,7 @@ rule gca_rgi_chunk:
         faa=os.path.join(GCA_DIR, "annotation", "{level}", "chunks", "chunk_{chunk}.faa"),
         setup="status/rgi_setup.done"
     output:
-        os.path.join(GCA_DIR, "annotation", "{level}", "rgi", "chunk_{chunk}.txt")
+        temp(os.path.join(GCA_DIR, "annotation", "{level}", "rgi", "chunk_{chunk}.txt"))
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "rgi_{level}_{chunk}.log")
     params:
@@ -289,14 +316,14 @@ rule gca_rgi_chunk:
     shell:
         "(date && mkdir -p $(dirname {output}) && cd {params.db} && "
         "rgi main --input_sequence {input.faa} --output_file {params.prefix} --input_type protein --local "
-        "-a DIAMOND --clean -n {threads} && date) &> >(tee {log})"
+        "-a DIAMOND --clean -n {threads} && rm -f {params.prefix}.json && date) &> >(tee {log})"
 
 rule gca_bacmet_chunk:
     input:
         faa=os.path.join(GCA_DIR, "annotation", "{level}", "chunks", "chunk_{chunk}.faa"),
         db=os.path.join(ANNOT_DBS_DIR, "bacmet", "bacmet_exp.dmnd")
     output:
-        os.path.join(GCA_DIR, "annotation", "{level}", "bacmet", "chunk_{chunk}.tsv")
+        temp(os.path.join(GCA_DIR, "annotation", "{level}", "bacmet", "chunk_{chunk}.tsv"))
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "bacmet_{level}_{chunk}.log")
     params:
@@ -318,7 +345,7 @@ rule gca_eggnog_chunk:
         faa=os.path.join(GCA_DIR, "annotation", "{level}", "chunks", "chunk_{chunk}.faa"),
         sif=GCA["eggnog"]["sif"]
     output:
-        os.path.join(GCA_DIR, "annotation", "{level}", "eggnog", "chunk_{chunk}.emapper.annotations")
+        temp(os.path.join(GCA_DIR, "annotation", "{level}", "eggnog", "chunk_{chunk}.emapper.annotations"))
     log:
         os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "eggnog_{level}_{chunk}.log")
     params:
@@ -348,6 +375,7 @@ rule gca_eggnog_chunk:
         "singularity exec -B /ei {input.sif} emapper.py $MODE --output_dir {params.outdir} "
         "-o chunk_{wildcards.chunk} --data_dir {params.tmp}/db --cpu {threads} --temp_dir {params.tmp}/work "
         "--override {params.extra}; "
+        "rm -f {params.outdir}/chunk_{wildcards.chunk}.emapper.hits $S $S.keep; "
         "date) &> >(tee {log})"
 
 # collate per-chunk outputs (one header)
@@ -415,7 +443,7 @@ rule gca_propagate:
     wildcard_constraints:
         level="|".join(str(l) for l in GCA_PROP) if GCA_PROP else "NONE"
     message:
-        "Gene catalogue (all genes) (all genes): level-{wildcards.level} annotations inherited from level " + str(GCA_ANNOT)
+        "Gene catalogue (all genes): level-{wildcards.level} annotations inherited from level " + str(GCA_ANNOT)
     shell:
         "(trap 'rm -rf {params.tmp}' EXIT; date && "
         "python {params.script} --level {wildcards.level} --annot-level " + str(GCA_ANNOT) + " "
