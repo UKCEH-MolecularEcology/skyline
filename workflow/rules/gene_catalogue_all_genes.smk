@@ -67,6 +67,22 @@ GCA_PROP = [int(l) for l in GCA.get("propagate_levels", [l for l in GCA_LEVELS i
 assert all(l in GCA_LEVELS and l != GCA_ANNOT for l in GCA_PROP), \
     "gene_catalogue_all_genes.propagate_levels must be clustering levels other than annotate_level"
 
+# ---- safety: this file deletes intermediates, so refuse to run if any path could reach inputs or shared data.
+#      Deletions are limited to GCA_DIR (renamed/, db/, tmp/, per-chunk annotation files) and node-local
+#      <local_tmpdir>/<user>_gca_* scratch; original assemblies are only read (via symlinks in input/).
+_real = lambda p: os.path.realpath(os.path.abspath(str(p)))
+_inside = lambda p, d: _real(p) == _real(d) or _real(p).startswith(_real(d).rstrip(os.sep) + os.sep)
+if os.path.basename(GCA_DIR) != "gene_catalogue_all_genes" or not _inside(GCA_DIR, ANNOT_RESULTS_DIR) \
+        or _real(GCA_DIR) == _real(ANNOT_RESULTS_DIR):
+    raise WorkflowError("unsafe gene_catalogue_all_genes output directory: " + GCA_DIR)
+_protected = list(GCA_INPUTS.values()) + [GCA["eggnog"]["db"], GCA["eggnog"]["sif"],
+              os.path.join(ANNOT_DBS_DIR, "rgi"), os.path.join(ANNOT_DBS_DIR, "bacmet")]
+for _p in _protected:
+    if _inside(_p, GCA_DIR) or _inside(GCA_DIR, _p):
+        raise WorkflowError("input or shared database overlaps the all-genes output directory: " + str(_p))
+if _real(GCA.get("local_tmpdir", "/tmp")) in ("/", _real(ANNOT_RESULTS_DIR)):
+    raise WorkflowError("gene_catalogue_all_genes.local_tmpdir must be a scratch directory, not " + GCA.get("local_tmpdir"))
+
 localrules: gene_catalogue_all_genes_all, gca_link_inputs, gca_summary
 
 ###################
@@ -87,8 +103,11 @@ rule gene_catalogue_all_genes_all:
         import shutil
         if not params.keep_db:
             for d in (params.db, params.tmp):
-                if os.path.isdir(d):
-                    shutil.rmtree(d)
+                if not os.path.lexists(d):
+                    continue
+                if os.path.islink(d) or not _inside(d, GCA_DIR) or _real(d) == _real(GCA_DIR):
+                    raise WorkflowError("refusing to remove " + d)
+                shutil.rmtree(d)     # does not follow symlinks inside (subdb data links are removed, not their targets)
 
 
 ################### inputs
@@ -105,8 +124,10 @@ rule gca_link_inputs:
             out.write("sample\tsource\n")
             for s in GCA_SAMPLES:
                 link = os.path.join(d, s + ".faa")
-                if os.path.lexists(link):
-                    os.remove(link)
+                if os.path.islink(link):
+                    os.remove(link)          # removes the link only, never the original assembly
+                elif os.path.exists(link):
+                    raise WorkflowError("not a symlink, refusing to replace: " + link)
                 os.symlink(GCA_INPUTS[s], link)
                 out.write("{}\t{}\n".format(s, GCA_INPUTS[s]))
 
