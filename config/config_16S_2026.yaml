@@ -46,7 +46,7 @@ cs_profile:
   # GGACTACHVGGGTWTCTAAT + GGACTACNNGGGTATCTAAT); primers excluded from the trimmed long-read 16S
   fwd: "CCTAYGGGNBGCWSCAG"
   rev: "GGACTACNNGGGTWTCTAAT"
-  cluster_ids: [97, 99]            # CS OTUs are 97% OTUs; 99 as a stricter check
+  cluster_ids: [90, 95, 97, 99]    # CS OTUs are 97% OTUs; 90/95 looser and 99 stricter, as in the 2026 run
   cluster_strand: "both"
   sample_column: "PLOT"
   habitat_columns: ["EZ_DESC_07", "COUNTRY", "LC07"]   # add a plot-level Broad Habitat / AVC column when available
