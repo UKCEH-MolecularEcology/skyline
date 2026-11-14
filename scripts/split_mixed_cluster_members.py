@@ -3,6 +3,15 @@
 import csv
 import sys
 
+# very large clusters (e.g. 90% identity) have member lists longer than csv's default field limit (131072 chars)
+_limit = sys.maxsize
+while True:
+    try:
+        csv.field_size_limit(_limit)
+        break
+    except OverflowError:
+        _limit //= 10
+
 # Get input and output file paths from command-line arguments
 input_file = sys.argv[1]
 output_file = sys.argv[2]
