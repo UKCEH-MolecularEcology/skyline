@@ -241,6 +241,6 @@ gca_collate_eggnog:
   mem: "256G"
 
 gca_propagate:
-  partition: "ei-medium"
-  mem: "360G"    # DuckDB limited to propagate_memory (300GB); spills to node-local /tmp
+  partition: "ei-largemem"
+  mem: "1000G"
   time: "2-00:00:00"
