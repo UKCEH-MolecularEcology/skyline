@@ -1,11 +1,11 @@
 # 16S -> OTU -> dereplicated-MAG linking for the MQ_MAGs_all_0.95 collection (MAGs binned from lr_results_20260202).
 # Overlay on config.yaml:
 #   sbatch sbatch_snakemake.sh run --configfile config/config.yaml config/config_16S_2026.yaml
-# Own working folder (status/, .snakemake/) and results folder, so the June 2025 run is untouched.
+# Runs in the repo folder (shared status/); results in their own folder, so the June 2025 results are untouched.
 
 steps: ["extract", "cluster", "dereplicate"]
 
-workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/runs/16S_2026"
+workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline"
 results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_2026"
 
 # the 14 lr_results_20260202 assemblies (per-sample HiFi, co-assemblies, hybrids, ONT)
