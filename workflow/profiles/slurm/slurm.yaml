@@ -260,3 +260,8 @@ cs_cluster:
   partition: "ei-medium"
   mem: "16G"
   time: "06:00:00"
+
+asv_mag_profile:
+  partition: "ei-medium"
+  mem: "16G"
+  time: "02:00:00"

@@ -72,6 +72,16 @@ if "dereplicate" in config["steps"]:
         "status/dereplicated_mag_link.done"
     ]
 
+# AMPLICON PROFILE: MAG occurrence across this project's amplicon samples via the ASV -> dMAG links
+if "asv_profile" in config["steps"]:
+    if "dereplicate" not in config["steps"]:
+        raise WorkflowError('step "asv_profile" uses the ASV -> dMAG links: enable "dereplicate" in the same run')
+    include:
+        "rules/asv_profile.smk"
+    TARGETS += [
+        "status/asv_profile.done"
+    ]
+
 # SURVEY PROFILE: MAG occurrence across an amplicon survey (e.g. Countryside Survey 2007) via the 16S links
 if "cs_profile" in config["steps"]:
     if not all(st in config["steps"] for st in ("extract", "dereplicate")):

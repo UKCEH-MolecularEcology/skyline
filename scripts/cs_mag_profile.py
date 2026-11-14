@@ -35,6 +35,10 @@ def main():
     ap.add_argument("--taxonomy", default="")
     ap.add_argument("--prefix", default="")
     ap.add_argument("--sample-column", default="PLOT")
+    ap.add_argument("--features-in-rows", action="store_true",
+                    help="count table has features (ASVs/OTUs) as rows and samples as columns")
+    ap.add_argument("--sample-name-replace", default="",
+                    help="OLD:NEW applied to the count-table sample names, e.g. '.:-' (R turns '-' into '.')")
     ap.add_argument("--habitat-columns", nargs="*", default=[])
     ap.add_argument("--numeric-columns", nargs="*", default=[])
     ap.add_argument("--out-dir", required=True)
@@ -44,7 +48,13 @@ def main():
 
     # ---- survey counts (samples x OTUs) and metadata
     counts = pd.read_csv(a.otu_table, index_col=0)
+    if a.features_in_rows:
+        counts = counts.T
     counts.index = counts.index.astype(str).str.strip()
+    if a.sample_name_replace:
+        old, new = a.sample_name_replace.split(":", 1)
+        counts.index = counts.index.str.replace(old, new, regex=False)
+    counts.columns = counts.columns.astype(str).str.strip()
     counts = counts.fillna(0)
     totals = counts.sum(axis=1)
     rel = counts.div(totals.replace(0, np.nan), axis=0).fillna(0)
@@ -56,6 +66,9 @@ def main():
 
     # ---- links: amplicon name -> OTU id
     links = pd.read_csv(a.links, sep="\t", dtype=str)
+    for c in ("ASV", "dMAG"):
+        if c in links.columns:
+            links[c] = links[c].str.strip()          # stray carriage returns (CRLF FASTA) / spaces in names
     if len(links):
         links["OTU"] = links["ASV"].str.replace("^" + a.prefix, "", regex=True) if a.prefix else links["ASV"]
         links = links[links["dMAG"].notna() & (links["dMAG"] != "no_dmag")]
@@ -63,6 +76,7 @@ def main():
         links = pd.DataFrame(columns=["OTU", "dMAG", "classification"])
     tax_col = "classification" if "classification" in links.columns else None
     pairs = links[["OTU", "dMAG"] + ([tax_col] if tax_col else [])].drop_duplicates(["OTU", "dMAG"])
+    linked_not_in_table = pairs.loc[~pairs["OTU"].isin(counts.columns), "OTU"].nunique()
     pairs = pairs[pairs["OTU"].isin(counts.columns)]
     n_dmag_per_otu = pairs.groupby("OTU")["dMAG"].nunique()
 
@@ -78,7 +92,9 @@ def main():
             lambda x: ";".join(sorted(set(x.dropna())))).reindex(otu.index).fillna("")
     if a.taxonomy and os.path.exists(a.taxonomy):
         t = pd.read_csv(a.taxonomy, index_col=0)
-        otu["survey_taxonomy"] = t.iloc[:, 0].reindex(otu.index)
+        t.index = t.index.astype(str).str.strip()
+        tax = t.iloc[:, 0] if t.shape[1] == 1 else t.fillna("").astype(str).agg("; ".join, axis=1)  # one column or ranks
+        otu["survey_taxonomy"] = tax.reindex(otu.index)
     otu.sort_values(["n_dMAGs", "reads"], ascending=False).to_csv(out("otu_mag_links.tsv"), sep="\t")
 
     # ---- link summary
@@ -95,6 +111,7 @@ def main():
         ("percent_reads_linked_per_sample_min", round(100 * lf.min(), 2)),
         ("percent_reads_linked_per_sample_max", round(100 * lf.max(), 2)),
         ("dMAGs_linked_to_survey_OTUs", int(pairs["dMAG"].nunique())),
+        ("linked_OTUs_absent_from_count_table", int(linked_not_in_table)),
         ("samples", len(counts)),
         ("samples_with_metadata", int(in_meta.sum())),
     ]

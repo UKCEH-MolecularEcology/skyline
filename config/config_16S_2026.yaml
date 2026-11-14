@@ -5,7 +5,7 @@
 # Also runs the Countryside Survey 2007 linking (step cs_profile, results/16S_CS2007/), which starts as soon as this
 # run's contig -> MAG -> dMAG table exists.
 
-steps: ["extract", "cluster", "dereplicate", "cs_profile"]
+steps: ["extract", "cluster", "dereplicate", "asv_profile", "cs_profile"]
 
 workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline"
 results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_2026"
@@ -33,6 +33,18 @@ dmag_link:
   assembly_contigs: "{ass_dir}/{asm}/contigs/contigs.fa"
   gtdb_arc: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.ar53.summary.tsv"
   gtdb_bac: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.bac120.summary.tsv"
+
+# SKYLINE AMPLICONS: MAG occurrence across the 16S amplicon samples (ASV -> dMAG links of this run)
+asv_profile:
+  cluster_ids: [90, 95, 97, 99]
+  feature_table: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/CEH_soil_project/16S/feature_table.csv"    # ASVs x samples (filtered: 11,847 of the 59,271 ASVs)
+  features_in_rows: true
+  sample_name_replace: ".:-"               # SkyL.1AA1.1.16S (count table) -> SkyL-1AA1-1-16S (sample table)
+  sample_table: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/CEH_soil_project/16S/sample_table.csv"
+  sample_column: "ID"
+  taxonomy: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/CEH_soil_project/16S/tax_table.csv"
+  group_columns: ["bulk_or_rhizo", "treatment", "time_point", "date", "plot"]
+  numeric_columns: []
 
 # COUNTRYSIDE SURVEY 2007 16S (Zenodo 10.5281/zenodo.12744255): links to the dMAGs + MAG occurrence across GB
 cs_profile:
