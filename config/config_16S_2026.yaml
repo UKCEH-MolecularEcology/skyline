@@ -6,7 +6,7 @@
 steps: ["extract", "cluster", "dereplicate"]
 
 workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/runs/16S_2026"
-results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results_16S_2026"
+results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_2026"
 
 # the 14 lr_results_20260202 assemblies (per-sample HiFi, co-assemblies, hybrids, ONT)
 samples: "config/samples_lr_20260202.tsv"
