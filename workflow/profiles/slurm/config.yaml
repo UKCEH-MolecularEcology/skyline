@@ -34,6 +34,8 @@ reason: True
 printshellcmds: True
 # conda
 use-conda: True
+# environment modules (vsearch for OTU clustering; the only rules with envmodules)
+use-envmodules: True
 conda-prefix: "/hpc-home/kar23heg/conda_envs/decode" # USER_INPUT
 # wait given seconds if an output file of a job is not present after the job finished
 latency-wait: 60

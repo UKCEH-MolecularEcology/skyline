@@ -63,7 +63,7 @@ rule cluster_otus:
         id=lambda wildcards: float(wildcards.id)/100,
         strand=CLUSTER_STRAND
     envmodules:
-        "vsearch"
+        "vsearch/2.11.1"     # EI module, as in June 2025 (profile: use-envmodules)
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     shell:
@@ -208,7 +208,7 @@ rule make_otu_table:
         id=lambda wildcards: float(wildcards.id)/100,
         strand=CLUSTER_STRAND
     envmodules:
-        "vsearch"
+        "vsearch/2.11.1"     # EI module, as in June 2025 (profile: use-envmodules)
     shell:
         "(date && "
         "vsearch --usearch_global {input.fasta} --db {input.centroids} --id {params.id} --strand {params.strand} --otutabout {output.table} && "
