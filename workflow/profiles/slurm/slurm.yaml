@@ -244,3 +244,14 @@ gca_propagate:
   partition: "ei-largemem"
   mem: "1000G"
   time: "2-00:00:00"
+
+# ---- 16S linking (2026 run, Countryside Survey run)
+build_dmag_contig_table:
+  partition: "ei-medium"
+  mem: "16G"
+  time: "06:00:00"   # reads each assembly's contigs file for the per-prefix check (co-assemblies are large)
+
+cs_mag_profile:
+  partition: "ei-medium"
+  mem: "32G"         # CS OTU table: 1,094 samples x 39,952 OTUs
+  time: "04:00:00"
