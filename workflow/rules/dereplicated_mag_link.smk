@@ -12,6 +12,14 @@ import os
 # parameters
 CLUSTER_IDS = config["cluster_ids"]
 
+# contig -> MAG -> dMAG table and GTDB-Tk summaries; defaults = 2025 layout of drep_dir
+DMAG = config.get("dmag_link") or {}
+DMAG_BUILD = bool(DMAG.get("build_contig_table", False))
+DMAG_CONTIGS = (os.path.join(RESULTS_DIR, "dereplicated_OTU", "contig_MAGs_dMAGs.tsv") if DMAG_BUILD
+                else DMAG.get("contig_table", os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv")))
+DMAG_GTDB_ARC = DMAG.get("gtdb_arc", os.path.join(DREP_DIR, "gtdb/gtdbtk.ar53.summary.tsv"))
+DMAG_GTDB_BAC = DMAG.get("gtdb_bac", os.path.join(DREP_DIR, "gtdb/gtdbtk.bac120.summary.tsv"))
+
 localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags, concat_dereplicated_gtdbtk_summaries, merge_asv_to_dmag_with_gtdbtk
 
 ###################
@@ -30,7 +38,7 @@ rule dereplicated_mag_link_all:
 # merging the dereplicated bin and contig info with the cluster info
 rule merge_dereplicated_bin_into_clusters:
     input:
-        bin_info=os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv"),
+        bin_info=DMAG_CONTIGS,
         clusters=lambda wildcards: os.path.join(RESULTS_DIR, f"OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters_split.csv")
     output:
         merged=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/mixed_clusters_{id}_dereplicated_bin.csv")
@@ -49,7 +57,7 @@ rule merge_dereplicated_bin_into_clusters:
 rule map_asvs_to_dreplicated_mags:
     input:
         enriched=rules.merge_dereplicated_bin_into_clusters.output.merged,
-        dmag_map=os.path.join(DREP_DIR, "results/contig_MAGs_dMAGs.tsv")
+        dmag_map=DMAG_CONTIGS
     output:
         mapping=os.path.join(RESULTS_DIR, "dereplicated_OTU/{id}_cluster/asv_to_dmag_mapping_{id}.tsv")
     log:
@@ -81,8 +89,8 @@ rule map_asvs_to_dreplicated_mags:
 # Concatenating the GTDBtk summaries for the dereplicated bins
 rule concat_dereplicated_gtdbtk_summaries:
     input:
-        arc=os.path.join(DREP_DIR, "gtdb/gtdbtk.ar53.summary.tsv"),
-        bac=os.path.join(DREP_DIR, "gtdb/gtdbtk.bac120.summary.tsv")
+        arc=DMAG_GTDB_ARC,
+        bac=DMAG_GTDB_BAC
     output:
         combined=os.path.join(RESULTS_DIR, "dereplicated_OTU/dmag_gtdbtk_summary.tsv")
     log:
@@ -113,3 +121,29 @@ rule merge_asv_to_dmag_with_gtdbtk:
         """
         (date && python {params.script} {input.mapping} {input.gtdbtk} {output.merged} && date) &> >(tee {log})
         """
+
+
+# contig -> MAG -> dMAG table for a dRep collection (Cdb/Wdb + MAG FASTA headers), checked against the assemblies
+if DMAG_BUILD:
+    rule build_dmag_contig_table:
+        input:
+            cdb=os.path.join(DREP_DIR, "data_tables", "Cdb.csv"),
+            wdb=os.path.join(DREP_DIR, "data_tables", "Wdb.csv")
+        output:
+            DMAG_CONTIGS
+        log:
+            os.path.join(RESULTS_DIR, "logs/dereplicated_OTU/build_contig_table.log")
+        params:
+            src=os.path.join(SRC_DIR, "build_dmag_contig_table.py"),
+            genome_dirs=" ".join(DMAG.get("genome_dirs", [os.path.join(DREP_DIR, "dereplicated_genomes")])),
+            prefix_map=" ".join("{}={}".format(k, v) for k, v in (DMAG.get("mag_prefix_to_assembly") or {}).items()),
+            # templates passed through literally (lambdas stop Snakemake treating {sample}/{asm} as wildcards)
+            default_asm=lambda wildcards: DMAG.get("default_assembly", "hifi_individual_{sample}"),
+            asm_contigs=lambda wildcards: DMAG.get("assembly_contigs", "{ass_dir}/{asm}/contigs/contigs.fa").replace("{ass_dir}", ASS_DIR)
+        message:
+            "Building the contig -> MAG -> dMAG table from the dRep tables"
+        shell:
+            "(date && python {params.src} --cdb {input.cdb} --wdb {input.wdb} --genome-dirs {params.genome_dirs} "
+            "--prefix-map {params.prefix_map} --default-assembly '{params.default_asm}' "
+            "--assembly-contigs '{params.asm_contigs}' --out {output} && date) &> >(tee {log})"
+

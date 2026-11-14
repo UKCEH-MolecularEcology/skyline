@@ -9,6 +9,10 @@ Purpose: To run extract 16S V4 regions from long-read 16S sequences
 
 import os
 
+# per-assembly 16S file; default = 2025 per-sample metaMDBG layout
+ASM_16S_PATH = config.get("asm_16S_path", "{ass_dir}/{sample}/metamdbg/annotation/16S_seqs.fa")
+HYPEREX_MARKER = os.path.join(OLDPWD, "submodules", "hyperex_installed.txt")   # repo copy, also when workdir differs
+
 localrules: install_hyperex, extract_16S_all
 
 ###################
@@ -17,7 +21,7 @@ localrules: install_hyperex, extract_16S_all
 rule extract_16S_all:
     input:
         expand(f"{RESULTS_DIR}/{{sample}}/{{sample}}_16S_seqs.fa", sample=SAMPLES),
-        "submodules/hyperex_installed.txt",
+        HYPEREX_MARKER,
         os.path.join(RESULTS_DIR, "hyperex/extracted_16S.fa"),
         os.path.join(RESULTS_DIR, "extracted/extracted_16S.fa")
     output:
@@ -26,7 +30,7 @@ rule extract_16S_all:
 # Renaming
 rule rename_16S_headers:
     input:
-        lambda wildcards: os.path.join(ASS_DIR, wildcards.sample, "metamdbg", "annotation", "16S_seqs.fa")
+        lambda wildcards: ASM_16S_PATH.format(ass_dir=ASS_DIR, sample=wildcards.sample)
     output:
         renamed = f"{RESULTS_DIR}/{{sample}}/{{sample}}_16S_seqs.fa"
     wildcard_constraints:
@@ -58,7 +62,7 @@ rule cat_ass_16S:
 
 rule install_hyperex:
     output:
-        touch("submodules/hyperex_installed.txt")
+        touch(HYPEREX_MARKER)
     log:
         os.path.join(RESULTS_DIR, "logs/install/hyperex_install.log")
     conda:
@@ -106,7 +110,8 @@ rule hyperex_16S:
     shell:
         "(date && export PATH={params.path}:$PATH && "
         "export PATH={params.cargo_path}:$PATH && "
-        "hyperex -p $(basename -s '.fa' {output.ext_fa}) -f {params.fwd} -r {params.rev} {input} && "
+        "mkdir -p $(dirname {output.ext_fa}) && "
+        "hyperex -p $(dirname {output.ext_fa})/$(basename -s '.fa' {output.ext_fa}) -f {params.fwd} -r {params.rev} {input} && "
         "date) &> >(tee {log})"
 
 rule extract_16S:

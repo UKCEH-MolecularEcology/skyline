@@ -65,7 +65,8 @@ rule cluster_otus:
 # Cluster log summary extraction
 rule parse_cluster_logs:
     input:
-        logs=expand(os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}.log"), id=CLUSTER_IDS)
+        logs=expand(os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}.log"), id=CLUSTER_IDS),
+        fasta=os.path.join(RESULTS_DIR, "concat_16S/amplicon_lr_ASVs.fa")
     output:
         summary=os.path.join(RESULTS_DIR, "OTU/otu_cluster_log_summary.tsv")
     message:
@@ -75,6 +76,8 @@ rule parse_cluster_logs:
         import pandas as pd
 
         summary_data = []
+        with open(input.fasta) as fa:
+            total_seqs = sum(1 for line in fa if line.startswith(">"))   # amplicon ASVs + long-read 16S
         pattern = re.compile(
             r"Clusters: (?P<clusters>\d+).*?"
             r"Size min (?P<min>\d+), max (?P<max>\d+), avg (?P<avg>[0-9.]+)\n"
@@ -90,7 +93,7 @@ rule parse_cluster_logs:
                     cluster_pct = id_match.group(1)
                     stats = match.groupdict()
                     stats["cluster_pct"] = cluster_pct
-                    stats["total_seqs"] = 107605  # Hardcoded from your input
+                    stats["total_seqs"] = total_seqs
                     summary_data.append(stats)
 
         df = pd.DataFrame(summary_data)
@@ -202,4 +205,19 @@ rule make_otu_table:
         "date) &> >(tee {log})"
         
 
-
+# Splitting the mixed vsearch clusters for downstream processing
+rule split_mixed_cluster_members:
+    input:
+        mixed=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters.csv")
+    output:
+        split=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/clusters_{id}_mixed_clusters_split.csv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/OTU/{id}_cluster/split_mixed_clusters_{id}.log")
+    params:
+        src=os.path.join(SRC_DIR, "split_mixed_cluster_members.py")
+    message:
+        "Splitting members into individual lines for cluster {wildcards.id}"
+    shell:
+        """
+        (date && python {params.src} {input.mixed} {output.split} && date) &> >(tee {log})
+        """

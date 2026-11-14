@@ -1,0 +1,33 @@
+# 16S -> OTU -> dereplicated-MAG linking for the MQ_MAGs_all_0.95 collection (MAGs binned from lr_results_20260202).
+# Overlay on config.yaml:
+#   sbatch sbatch_snakemake.sh run --configfile config/config.yaml config/config_16S_2026.yaml
+# Own working folder (status/, .snakemake/) and results folder, so the June 2025 run is untouched.
+
+steps: ["extract", "cluster", "dereplicate"]
+
+workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/runs/16S_2026"
+results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results_16S_2026"
+
+# the 14 lr_results_20260202 assemblies (per-sample HiFi, co-assemblies, hybrids, ONT)
+samples: "config/samples_lr_20260202.tsv"
+ass_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/data/lr_results_20260202/annotation"
+asm_16S_path: "{ass_dir}/{sample}/annotation/16S_seqs.fa"
+
+# dereplicated collection (dRep 0.95)
+drep_dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95"
+dmag_link:
+  build_contig_table: true          # contig -> MAG -> dMAG from data_tables/Cdb.csv + Wdb.csv and the MAG FASTA headers
+  genome_dirs:                      # all 42,487 MAGs (first) + the dereplicated winners
+    - "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all"
+    - "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/dereplicated_genomes"
+  # MAG name prefix (before "_bin.") -> assembly; other prefixes: Bulk_/Rhizosphere_<sample> -> hifi_individual_<sample>
+  mag_prefix_to_assembly:
+    Bulk_hifi_co: "hifi_coassembly_bulk"
+    Rhizosphere_hifi_co: "hifi_coassembly_rhizo"
+    Bulk_hybrid_co: "hybrid_coassembly_bulk"
+    Bulk_hybrid_single: "hybrid_b26"
+  default_assembly: "hifi_individual_{sample}"
+  # each prefix is checked: one contig must be identical in this file, or the step stops
+  assembly_contigs: "{ass_dir}/{asm}/contigs/contigs.fa"
+  gtdb_arc: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.ar53.summary.tsv"
+  gtdb_bac: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.bac120.summary.tsv"
