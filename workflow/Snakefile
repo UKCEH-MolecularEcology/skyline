@@ -71,6 +71,14 @@ if "dereplicate" in config["steps"]:
         "status/dereplicated_mag_link.done"
     ]
 
+# SURVEY PROFILE: MAG occurrence across an amplicon survey (e.g. Countryside Survey 2007) via the 16S links
+if "cs_profile" in config["steps"]:
+    include:
+        "rules/cs_profile.smk"
+    TARGETS += [
+        "status/cs_profile.done"
+    ]
+
 # COMPARIING WITH GLOBDB and SMAG
 if "comparison" in config["steps"]:
     include:

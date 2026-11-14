@@ -12,6 +12,10 @@ import os
 localrules: cat_asvs, otu_all, parse_cluster_logs, summarize_cluster_counts, combine_cluster_summaries
 
 CLUSTER_IDS=config["cluster_ids"]
+# amplicon reference set: names are prefixed when given (members are typed as amplicon by a leading "ASV")
+ASV_PREFIX = config.get("asv_prefix", "")
+# vsearch strand: "plus" (default, as before) or "both" (long-read 16S is extracted in contig orientation)
+CLUSTER_STRAND = config.get("cluster_strand", "plus")
 
 ###################
 # RULES
@@ -35,10 +39,14 @@ rule cat_asvs:
         all_cat=os.path.join(RESULTS_DIR, "concat_16S/amplicon_lr_ASVs.fa")
     log:
         os.path.join(RESULTS_DIR, "logs/concat/amplicon_lr_concat.log")
+    params:
+        prefix=ASV_PREFIX
     message:
         "Concatenating amplicon and extracted-LR 16S ASVs"
     shell:
-        "(date && cat {input} > {output.all_cat} && date) &> >(tee {log})"
+        "(date && "
+        "awk -v p='{params.prefix}' '/^>/ && p != \"\" {{sub(/^>/, \">\" p)}} {{print}}' {input.amplicon} > {output.all_cat} && "
+        "cat {input.lr} >> {output.all_cat} && date) &> >(tee {log})"
 
 # OTU clustering
 rule cluster_otus:
@@ -52,14 +60,15 @@ rule cluster_otus:
     message:
         "Cluster OTUs at percentage: {wildcards.id}"
     params:
-        id=lambda wildcards: float(wildcards.id)/100
+        id=lambda wildcards: float(wildcards.id)/100,
+        strand=CLUSTER_STRAND
     envmodules:
         "vsearch"
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     shell:
         "(date && mkdir -p $(dirname {output.otus}) && "
-        "vsearch --cluster_fast {input} --id {params.id} --centroids {output.otus} --uc {output.uc} && "
+        "vsearch --cluster_fast {input} --id {params.id} --strand {params.strand} --centroids {output.otus} --uc {output.uc} && "
         "date) &> >(tee {log})"
 
 # Cluster log summary extraction
@@ -196,12 +205,13 @@ rule make_otu_table:
 #    conda:
 #        os.path.join(ENV_DIR, "vsearch.yaml")
     params:
-        id=lambda wildcards: float(wildcards.id)/100
+        id=lambda wildcards: float(wildcards.id)/100,
+        strand=CLUSTER_STRAND
     envmodules:
         "vsearch"
     shell:
         "(date && "
-        "vsearch --usearch_global {input.fasta} --db {input.centroids} --id {params.id} --otutabout {output.table} && "
+        "vsearch --usearch_global {input.fasta} --db {input.centroids} --id {params.id} --strand {params.strand} --otutabout {output.table} && "
         "date) &> >(tee {log})"
         
 
