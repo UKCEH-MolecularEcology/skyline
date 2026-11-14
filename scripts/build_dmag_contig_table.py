@@ -107,12 +107,14 @@ def main():
     for genome, _ in cdb:
         for d in a.genome_dirs:
             path = os.path.join(d, genome)
-            if os.path.exists(path):
+            if os.path.isfile(path) and os.access(path, os.R_OK):   # exists AND readable (permissions differ per folder)
                 found[genome] = path
                 break
         else:
             missing.append(genome)
-    log("{} MAG FASTA files readable, {} not found (their contigs cannot be linked)".format(len(found), len(missing)))
+    unreadable = [g for g in missing if any(os.path.exists(os.path.join(d, g)) for d in a.genome_dirs)]
+    log("{} MAG FASTA files readable, {} missing or unreadable ({} exist but lack read permission); "
+        "their contigs cannot be linked".format(len(found), len(missing), len(unreadable)))
     winners_missing = [g for g in winner.values() if g not in found]
     if winners_missing:
         sys.exit("dereplicated MAGs (winners) missing from --genome-dirs, e.g. {}".format(winners_missing[:3]))
