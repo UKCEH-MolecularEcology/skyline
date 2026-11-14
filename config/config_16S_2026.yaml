@@ -2,8 +2,10 @@
 # Overlay on config.yaml:
 #   sbatch sbatch_snakemake.sh run --configfile config/config.yaml config/config_16S_2026.yaml
 # Runs in the repo folder (shared status/); results in their own folder, so the June 2025 results are untouched.
+# Also runs the Countryside Survey 2007 linking (step cs_profile, results/16S_CS2007/), which starts as soon as this
+# run's contig -> MAG -> dMAG table exists.
 
-steps: ["extract", "cluster", "dereplicate"]
+steps: ["extract", "cluster", "dereplicate", "cs_profile"]
 
 workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline"
 results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_2026"
@@ -31,3 +33,21 @@ dmag_link:
   assembly_contigs: "{ass_dir}/{asm}/contigs/contigs.fa"
   gtdb_arc: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.ar53.summary.tsv"
   gtdb_bac: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_0.95/gtdb_classify/gtdbtk.bac120.summary.tsv"
+
+# COUNTRYSIDE SURVEY 2007 16S (Zenodo 10.5281/zenodo.12744255): links to the dMAGs + MAG occurrence across GB
+cs_profile:
+  results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_CS2007"
+  repseqs: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_CS2007/data/repseqs.fasta"        # CS OTU sequences (named OTU<n>)
+  otu_table: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_CS2007/data/otu_table.csv"      # samples x OTUs
+  taxonomy: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_CS2007/data/taxonomy.csv"
+  metadata: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_CS2007/data/CS2007_SOIL_PHYSICOCHEM.csv"   # EIDC 10.5285/79669141-cde5-49f0-b24d-f3c6a1a52db8
+  otu_prefix: "ASV_CS_"            # CS OTUs renamed for clustering (amplicon members are recognised by "ASV")
+  # CS amplicon: V3-V4, 341F/806R. IUPAC union of the common variants (CCTACGGGNGGCWGCAG + CCTAYGGGRBGCASCAG;
+  # GGACTACHVGGGTWTCTAAT + GGACTACNNGGGTATCTAAT); primers excluded from the trimmed long-read 16S
+  fwd: "CCTAYGGGNBGCWSCAG"
+  rev: "GGACTACNNGGGTWTCTAAT"
+  cluster_ids: [97, 99]            # CS OTUs are 97% OTUs; 99 as a stricter check
+  cluster_strand: "both"
+  sample_column: "PLOT"
+  habitat_columns: ["EZ_DESC_07", "COUNTRY", "LC07"]   # add a plot-level Broad Habitat / AVC column when available
+  numeric_columns: ["PH", "LOI", "C_CONC_LOI", "MOISTURE", "N_PERCENT", "BULK_DENSITY"]

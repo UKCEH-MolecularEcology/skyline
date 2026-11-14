@@ -1,3 +1,4 @@
+from snakemake.exceptions import WorkflowError
 """
 Author: Susheel Bhanu BUSI
 Affiliation: Molecular Ecology group, UKCEH
@@ -73,6 +74,9 @@ if "dereplicate" in config["steps"]:
 
 # SURVEY PROFILE: MAG occurrence across an amplicon survey (e.g. Countryside Survey 2007) via the 16S links
 if "cs_profile" in config["steps"]:
+    if not all(st in config["steps"] for st in ("extract", "dereplicate")):
+        raise WorkflowError('step "cs_profile" uses this run\'s long-read 16S and contig table: '
+                            'enable "extract", "cluster" and "dereplicate" in the same run')
     include:
         "rules/cs_profile.smk"
     TARGETS += [
