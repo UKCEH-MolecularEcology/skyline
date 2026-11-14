@@ -22,7 +22,8 @@ CSP_PREFIX = CSP.get("otu_prefix", "ASV_CS_")
 CSP_OUT = ["otu_mag_links.tsv", "link_summary.tsv", "dmag_sample_abundance.tsv.gz",
            "dmag_habitat.tsv", "dmag_soil.tsv", "dmag_summary.tsv"]
 
-localrules: cs_profile_all, cs_cat_otus, cs_split_mixed, cs_merge_bins, cs_map_otus, cs_merge_tax
+# per-cluster tables can be large at low identity (90%): those steps are submitted jobs (resources in slurm.yaml)
+localrules: cs_profile_all, cs_cat_otus
 
 wildcard_constraints:
     csid="|".join(CSP_IDS)
@@ -103,10 +104,14 @@ rule cs_split_mixed:
         rules.cs_analyse_clusters.output.mixed
     output:
         os.path.join(CSP_DIR, "OTU/{csid}_cluster/clusters_{csid}_mixed_clusters_split.csv")
+    log:
+        os.path.join(CSP_DIR, "logs/split_mixed_{csid}.log")
     params:
         src=os.path.join(SRC_DIR, "split_mixed_cluster_members.py")
+    message:
+        "CS: splitting mixed clusters ({wildcards.csid}%)"
     shell:
-        "python {params.src} {input} {output}"
+        "(date && python {params.src} {input} {output} && date) &> >(tee {log})"
 
 # 3. links, through this run's contig -> MAG -> dMAG table and GTDB-Tk summary
 rule cs_merge_bins:
@@ -115,10 +120,15 @@ rule cs_merge_bins:
         clusters=rules.cs_split_mixed.output
     output:
         os.path.join(CSP_DIR, "dereplicated_OTU/{csid}_cluster/mixed_clusters_{csid}_dereplicated_bin.csv")
+    log:
+        os.path.join(CSP_DIR, "logs/merge_bins_{csid}.log")
     params:
         src=os.path.join(SRC_DIR, "merge_dereplicated_bins_to_clusters.py")
+    message:
+        "CS: adding contig -> MAG -> dMAG to the clusters ({wildcards.csid}%)"
     shell:
-        "mkdir -p $(dirname {output}) && python {params.src} {input.bin_info} {input.clusters} {output}"
+        "(date && mkdir -p $(dirname {output}) && python {params.src} {input.bin_info} {input.clusters} {output} && date) "
+        "&> >(tee {log})"
 
 rule cs_map_otus:
     input:
@@ -126,10 +136,14 @@ rule cs_map_otus:
         dmag_map=DMAG_CONTIGS
     output:
         os.path.join(CSP_DIR, "dereplicated_OTU/{csid}_cluster/otu_to_dmag_mapping_{csid}.tsv")
+    log:
+        os.path.join(CSP_DIR, "logs/map_otus_{csid}.log")
     params:
         src=os.path.join(SRC_DIR, "map_asvs_to_dmags.py")
+    message:
+        "CS: OTU -> dMAG links ({wildcards.csid}%)"
     shell:
-        "python {params.src} {input.enriched} {input.dmag_map} {output}"
+        "(date && python {params.src} {input.enriched} {input.dmag_map} {output} && date) &> >(tee {log})"
 
 rule cs_merge_tax:
     input:
@@ -137,10 +151,14 @@ rule cs_merge_tax:
         gtdbtk=rules.concat_dereplicated_gtdbtk_summaries.output.combined
     output:
         os.path.join(CSP_DIR, "dereplicated_OTU/{csid}_cluster/otu_to_dmag_mapping_{csid}_with_tax.tsv")
+    log:
+        os.path.join(CSP_DIR, "logs/merge_tax_{csid}.log")
     params:
         src=os.path.join(SRC_DIR, "merge_asv_dmag_with_gtdbtk.py")
+    message:
+        "CS: adding GTDB-Tk taxonomy ({wildcards.csid}%)"
     shell:
-        "python {params.src} {input.mapping} {input.gtdbtk} {output}"
+        "(date && python {params.src} {input.mapping} {input.gtdbtk} {output} && date) &> >(tee {log})"
 
 # 4. MAG occurrence across the survey
 rule cs_mag_profile:

@@ -265,3 +265,24 @@ asv_mag_profile:
   partition: "ei-medium"
   mem: "16G"
   time: "02:00:00"
+
+# CS linking per identity (90% clusters are large)
+cs_split_mixed:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "06:00:00"
+
+cs_merge_bins:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "06:00:00"
+
+cs_map_otus:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "06:00:00"
+
+cs_merge_tax:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "02:00:00"
