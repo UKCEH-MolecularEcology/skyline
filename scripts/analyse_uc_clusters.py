@@ -43,8 +43,9 @@ def summarize_clusters(cluster_members, cluster_reps):
     for cluster, members in cluster_members.items():
         sources = [classify_source(m) for m in members]
         rep = cluster_reps.get(cluster, "NA")
-        other_members = [m for m in members if m != rep]
-        members_str = ";".join(other_members)
+        # all members, INCLUDING the representative (it is a sequence of the cluster like any other;
+        # leaving it out dropped one ASV or one long-read 16S from every cluster downstream)
+        members_str = ";".join(members)
 
         if len(members) == 1:
             if sources[0] == "amplicon":

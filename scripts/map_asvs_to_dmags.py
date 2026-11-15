@@ -79,8 +79,8 @@ for cluster_id, asvs in asv_info.groupby("Cluster"):
                 "dMAG": mag["dMAG"]
             })
 
-# Save result as tab-separated output
-pd.DataFrame(results).to_csv(output_file, sep="\t", index=False)
+# Save result as tab-separated output (header-only when there are no links)
+pd.DataFrame(results, columns=["Cluster", "ASV", "MAG_bin", "MAG_sample", "dMAG"]).to_csv(output_file, sep="\t", index=False)
 
 #
 #import pandas as pd

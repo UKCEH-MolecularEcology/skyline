@@ -20,7 +20,8 @@ DMAG_CONTIGS = (os.path.join(RESULTS_DIR, "dereplicated_OTU", "contig_MAGs_dMAGs
 DMAG_GTDB_ARC = DMAG.get("gtdb_arc", os.path.join(DREP_DIR, "gtdb/gtdbtk.ar53.summary.tsv"))
 DMAG_GTDB_BAC = DMAG.get("gtdb_bac", os.path.join(DREP_DIR, "gtdb/gtdbtk.bac120.summary.tsv"))
 
-localrules: merge_dereplicated_bin_into_clusters, map_asvs_to_dreplicated_mags, concat_dereplicated_gtdbtk_summaries, merge_asv_to_dmag_with_gtdbtk
+# linking steps read the contig table and large cluster tables: submitted jobs (resources in slurm.yaml)
+localrules: concat_dereplicated_gtdbtk_summaries
 
 ###################
 # RULES

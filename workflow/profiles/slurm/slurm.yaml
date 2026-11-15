@@ -13,17 +13,20 @@ hyyperex_16S:
 cluster_otus:
   partition: "ei-medium"
   c: 24
-  time: "01:00:00"
+  mem: "16G"
+  time: "12:00:00"   # both strands (all-MAGs run) take longer
 
 analyse_otu_clusters:
   partition: "ei-medium"
   c: 4
-  time: "00:15:00"
+  mem: "32G"
+  time: "06:00:00"
 
 make_otu_table:
   partition: "ei-medium"
   c: 24
-  time: "04:00:00"
+  mem: "16G"
+  time: "12:00:00"
 
 create_lists:
   partition: "ei-medium"
@@ -248,41 +251,63 @@ gca_propagate:
 # ---- 16S linking (2026 run, Countryside Survey run)
 build_dmag_contig_table:
   partition: "ei-medium"
-  mem: "16G"
-  time: "06:00:00"   # reads each assembly's contigs file for the per-prefix check (co-assemblies are large)
+  mem: "64G"   # reads all 42,487 MAG files + assembly checks
+  time: "2-00:00:00"
+
+merge_dereplicated_bin_into_clusters:
+  partition: "ei-medium"
+  mem: "128G"   # contig table (all MAGs) x 90% clusters
+  time: "1-00:00:00"
+
+cs_merge_bins:
+  partition: "ei-medium"
+  mem: "128G"   # contig table (all MAGs) x 90% clusters
+  time: "1-00:00:00"
+
+map_asvs_to_dreplicated_mags:
+  partition: "ei-medium"
+  mem: "128G"   # ASV x MAG pairs per cluster; large at 90%
+  time: "2-00:00:00"
+
+cs_map_otus:
+  partition: "ei-medium"
+  mem: "128G"   # ASV x MAG pairs per cluster; large at 90%
+  time: "2-00:00:00"
+
+merge_asv_to_dmag_with_gtdbtk:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "12:00:00"
+
+cs_merge_tax:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "12:00:00"
+
+cs_split_mixed:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "12:00:00"
+
+asv_mag_profile:
+  partition: "ei-medium"
+  mem: "64G"
+  time: "12:00:00"
 
 cs_mag_profile:
   partition: "ei-medium"
-  mem: "32G"         # CS OTU table: 1,094 samples x 39,952 OTUs
-  time: "04:00:00"
+  mem: "128G"   # 1,094 samples x 39,952 OTUs x linked MAGs
+  time: "1-00:00:00"
 
 cs_cluster:
   partition: "ei-medium"
   mem: "16G"
-  time: "06:00:00"
+  time: "12:00:00"
 
-asv_mag_profile:
-  partition: "ei-medium"
-  mem: "16G"
-  time: "02:00:00"
 
-# CS linking per identity (90% clusters are large)
-cs_split_mixed:
-  partition: "ei-medium"
-  mem: "64G"
-  time: "06:00:00"
 
-cs_merge_bins:
-  partition: "ei-medium"
-  mem: "64G"
-  time: "06:00:00"
 
-cs_map_otus:
-  partition: "ei-medium"
-  mem: "64G"
-  time: "06:00:00"
-
-cs_merge_tax:
+cs_analyse_clusters:
   partition: "ei-medium"
   mem: "32G"
-  time: "02:00:00"
+  time: "06:00:00"

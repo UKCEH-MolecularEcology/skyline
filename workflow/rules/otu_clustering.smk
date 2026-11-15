@@ -161,17 +161,19 @@ rule summarize_cluster_counts:
         summary=os.path.join(RESULTS_DIR, "OTU/{id}_cluster/cluster_{id}_summary.tsv")
     log:
         os.path.join(RESULTS_DIR, "logs/cluster/cluster_{id}_summary.log")
+    params:
+        results=RESULTS_DIR      # this run's results (was hard-coded to results/OTU, i.e. the June 2025 run)
     message:
         "Summarizing cluster counts for identity {wildcards.id}"
     shell:
         r"""
         (
             echo -e "Cluster ID\tAmplicon Only\tLongread Only\tMixed\tSingleton Amplicon\tSingleton Longread" &&
-            echo -e "{wildcards.id}\t$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_amplicon_only.csv)\t\
-$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_longread_only.csv)\t\
-$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters.csv)\t\
-$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_amplicon.csv)\t\
-$(wc -l < results/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_longread.csv)"
+            echo -e "{wildcards.id}\t$(tail -n +2 {params.results}/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_amplicon_only.csv | wc -l)\t\
+$(tail -n +2 {params.results}/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_longread_only.csv | wc -l)\t\
+$(tail -n +2 {params.results}/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_mixed_clusters.csv | wc -l)\t\
+$(tail -n +2 {params.results}/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_amplicon.csv | wc -l)\t\
+$(tail -n +2 {params.results}/OTU/{wildcards.id}_cluster/clusters_{wildcards.id}_singleton_longread.csv | wc -l)"
         ) > {output.summary}
         """ + " &> >(tee {log})"
 
