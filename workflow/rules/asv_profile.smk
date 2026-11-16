@@ -19,7 +19,8 @@ localrules: asv_profile_all
 
 rule asv_profile_all:
     input:
-        expand(os.path.join(RESULTS_DIR, "ASV_profile", "{aid}", "{f}"), aid=ASP_IDS, f=ASP_OUT)
+        expand(os.path.join(RESULTS_DIR, "ASV_profile", "{aid}", "{f}"), aid=ASP_IDS, f=ASP_OUT),
+        expand(os.path.join(RESULTS_DIR, "ASV_profile", "{aid}", "dmag_16S_link_sources.tsv"), aid=ASP_IDS)
     output:
         touch("status/asv_profile.done")
 
@@ -52,3 +53,25 @@ rule asv_mag_profile:
         "--sample-name-replace '{params.replace}' --metadata {input.metadata} --taxonomy '{params.taxonomy}' "
         "--sample-column {params.sample_col} --habitat-columns {params.habitat} "
         "--numeric-columns {params.numeric} --out-dir {params.out_dir} && date) &> >(tee {log})"
+
+# per dMAG: which MAGs (winner and/or other dRep cluster members) carried the 16S evidence for its links
+rule asv_dmag_link_sources:
+    input:
+        links=os.path.join(RESULTS_DIR, "dereplicated_OTU/{aid}_cluster/asv_to_dmag_mapping_{aid}_with_tax.tsv"),
+        cdb=os.path.join(DREP_DIR, "data_tables", "Cdb.csv"),
+        wdb=os.path.join(DREP_DIR, "data_tables", "Wdb.csv")
+    output:
+        os.path.join(RESULTS_DIR, "ASV_profile", "{aid}", "dmag_16S_link_sources.tsv")
+    log:
+        os.path.join(RESULTS_DIR, "logs/ASV_profile/dmag_16S_link_sources_{aid}.log")
+    wildcard_constraints:
+        aid="|".join(ASP_IDS)
+    params:
+        src=os.path.join(SRC_DIR, "dmag_link_sources.py")
+    conda:
+        os.path.join(ENV_DIR, "bigslice.yaml")      # python + pandas
+    message:
+        "Skyline: MAGs behind each dMAG's 16S links ({wildcards.aid}%)"
+    shell:
+        "(date && python {params.src} {input.links} {input.cdb} {input.wdb} {output} && date) &> >(tee {log})"
+

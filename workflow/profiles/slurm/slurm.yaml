@@ -321,3 +321,13 @@ gca_source_summary:
   partition: "ei-largemem"
   mem: "1000G"         # DuckDB limited to propagate_memory; reads clusters_100 (one row per gene, ~4.6 billion)
   time: "2-00:00:00"
+
+asv_dmag_link_sources:
+  partition: "ei-medium"
+  mem: "32G"
+  time: "04:00:00"
+
+cs_dmag_link_sources:
+  partition: "ei-medium"
+  mem: "64G"         # CS link tables are large at 90%
+  time: "06:00:00"

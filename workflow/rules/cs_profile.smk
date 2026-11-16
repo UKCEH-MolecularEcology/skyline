@@ -30,7 +30,8 @@ wildcard_constraints:
 
 rule cs_profile_all:
     input:
-        expand(os.path.join(CSP_DIR, "CS_profile", "{csid}", "{f}"), csid=CSP_IDS, f=CSP_OUT)
+        expand(os.path.join(CSP_DIR, "CS_profile", "{csid}", "{f}"), csid=CSP_IDS, f=CSP_OUT),
+        expand(os.path.join(CSP_DIR, "CS_profile", "{csid}", "dmag_16S_link_sources.tsv"), csid=CSP_IDS)
     output:
         touch("status/cs_profile.done")
 
@@ -187,3 +188,23 @@ rule cs_mag_profile:
         "--metadata {input.metadata} --taxonomy '{params.taxonomy}' --prefix '{params.prefix}' "
         "--sample-column {params.sample_col} --habitat-columns {params.habitat} "
         "--numeric-columns {params.numeric} --out-dir {params.out_dir} && date) &> >(tee {log})"
+
+# per dMAG: which MAGs (winner and/or other dRep cluster members) carried the 16S evidence for its links
+rule cs_dmag_link_sources:
+    input:
+        links=rules.cs_merge_tax.output,
+        cdb=os.path.join(DREP_DIR, "data_tables", "Cdb.csv"),
+        wdb=os.path.join(DREP_DIR, "data_tables", "Wdb.csv")
+    output:
+        os.path.join(CSP_DIR, "CS_profile", "{csid}", "dmag_16S_link_sources.tsv")
+    log:
+        os.path.join(CSP_DIR, "logs/dmag_16S_link_sources_{csid}.log")
+    params:
+        src=os.path.join(SRC_DIR, "dmag_link_sources.py")
+    conda:
+        os.path.join(ENV_DIR, "bigslice.yaml")      # python + pandas
+    message:
+        "CS: MAGs behind each dMAG's 16S links ({wildcards.csid}%)"
+    shell:
+        "(date && python {params.src} {input.links} {input.cdb} {input.wdb} {output} && date) &> >(tee {log})"
+
