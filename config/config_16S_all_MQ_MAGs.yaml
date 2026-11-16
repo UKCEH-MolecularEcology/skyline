@@ -5,7 +5,7 @@
 #   sbatch sbatch_snakemake.sh run --configfile config/config.yaml config/config_16S_all_MQ_MAGs.yaml
 # Own working folder (run/) and results folder, so the earlier runs are untouched.
 
-steps: ["extract", "cluster", "dereplicate", "asv_profile", "cs_profile"]
+steps: ["extract", "cluster", "dereplicate", "asv_profile", "cs_profile", "gene_catalogue_all_genes"]
 
 workdir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_all_MQ_MAGs/run"
 results_dir: "/ei/projects/5/542de014-1e71-4955-945a-5d2ab09567a7/scratch/susbus/data/skyline/results/16S_all_MQ_MAGs"
