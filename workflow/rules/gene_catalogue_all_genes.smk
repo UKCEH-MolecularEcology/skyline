@@ -30,7 +30,7 @@ if not os.access(str(GCA.get("mmseqs_bin", "")), os.X_OK):
         "gene_catalogue_all_genes.mmseqs_bin ('{}') is not an executable. Download the 64-bit-key MMseqs2 build:\n"
         "  wget https://mmseqs.com/latest/mmseqs-linux-avx2-64bit.tar.gz && tar xzf mmseqs-linux-avx2-64bit.tar.gz\n"
         "and set mmseqs_bin to <dir>/mmseqs/bin/mmseqs".format(GCA.get("mmseqs_bin")))
-GCA_DIR = os.path.join(ANNOT_RESULTS_DIR, "gene_catalogue_all_genes")
+GCA_DIR = os.path.join(ANNOT_RESULTS_DIR, GCA.get("catalogue_dir", "gene_catalogue_all_genes"))
 GCA_LEVELS = [100] + sorted([int(l) for l in GCA["levels"] if int(l) < 100], reverse=True)   # 100 = exact
 GCA_PREV = {l: GCA_LEVELS[i - 1] for i, l in enumerate(GCA_LEVELS) if i > 0}
 GCA_ANNOT = int(GCA["annotate_level"])
@@ -59,6 +59,15 @@ def gca_find_inputs():
             found[sample] = path
     return found
 GCA_INPUTS = gca_find_inputs()
+# optional: per-MAG Prodigal ORFs (one .faa per MAG) as an extra input, combined into one FASTA with headers
+# '<MAG>__<orf>', so genes called only at MAG level enter the catalogue (exact dereplication removes the rest)
+GCA_MAG = GCA.get("mag_orfs") or {}
+GCA_MAG_SAMPLE = GCA_MAG.get("sample", "mag_MQ_MAGs_all") if GCA_MAG else None
+GCA_MAG_FAA = os.path.join(ANNOT_RESULTS_DIR, "gene_catalogue_mag_orfs", "mag_orfs.faa") if GCA_MAG else None
+if GCA_MAG:
+    if GCA_MAG_SAMPLE in GCA_INPUTS:
+        raise WorkflowError("mag_orfs sample name clashes with an assembly: " + GCA_MAG_SAMPLE)
+    GCA_INPUTS[GCA_MAG_SAMPLE] = GCA_MAG_FAA
 GCA_SAMPLES = sorted(GCA_INPUTS)
 GCA_DB = os.path.join(GCA_DIR, "db")
 GCA_TOOLS = [t for t in ["rgi", "bacmet", "eggnog"] if t in GCA.get("annotate", ["rgi", "bacmet", "eggnog"])]
@@ -72,7 +81,7 @@ assert all(l in GCA_LEVELS and l != GCA_ANNOT for l in GCA_PROP), \
 #      <local_tmpdir>/<user>_gca_* scratch; original assemblies are only read (via symlinks in input/).
 _real = lambda p: os.path.realpath(os.path.abspath(str(p)))
 _inside = lambda p, d: _real(p) == _real(d) or _real(p).startswith(_real(d).rstrip(os.sep) + os.sep)
-if os.path.basename(GCA_DIR) != "gene_catalogue_all_genes" or not _inside(GCA_DIR, ANNOT_RESULTS_DIR) \
+if not os.path.basename(GCA_DIR).startswith("gene_catalogue_all_genes") or not _inside(GCA_DIR, ANNOT_RESULTS_DIR) \
         or _real(GCA_DIR) == _real(ANNOT_RESULTS_DIR):
     raise WorkflowError("unsafe gene_catalogue_all_genes output directory: " + GCA_DIR)
 _protected = list(GCA_INPUTS.values()) + [GCA["eggnog"]["db"], GCA["eggnog"]["sif"],
@@ -112,6 +121,26 @@ rule gene_catalogue_all_genes_all:
 
 ################### inputs
 # symlinks named by sample (sr_* short-read per-sample, lr_* long-read assemblies) + manifest
+if GCA_MAG:
+    rule gca_mag_orfs:
+        output:
+            GCA_MAG_FAA
+        log:
+            os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_mag_orfs", "combine.log")
+        params:
+            src_dir=GCA_MAG["dir"]
+        message:
+            "Gene catalogue (all genes): combining the per-MAG ORF files"
+        shell:
+            # find/xargs: 42,487 files are too many for one command line; headers become '<MAG>__<orf id>'
+            "(date && mkdir -p $(dirname {output}) && "
+            "find {params.src_dir} -maxdepth 1 -name '*.faa' -print0 | sort -z | "
+            "xargs -0 awk 'FNR==1{{m=FILENAME; sub(/.*\\//, \"\", m); sub(/\\.faa$/, \"\", m)}} "
+            "/^>/{{split(substr($0, 2), a, \" \"); print \">\" m \"__\" a[1]; next}} {{print}}' > {output}.part && "
+            "mv {output}.part {output} && "
+            "echo \"MAG files: $(find {params.src_dir} -maxdepth 1 -name '*.faa' | wc -l)  ORFs: $(grep -c '>' {output})\" && "
+            "date) &> >(tee {log})"
+
 rule gca_link_inputs:
     output:
         manifest=os.path.join(GCA_DIR, "input", "manifest.tsv")
@@ -134,7 +163,8 @@ rule gca_link_inputs:
 # unique gene IDs: '<sample>|<first word of the Prodigal header>', trailing '*' removed, optional min length
 rule gca_rename:
     input:
-        manifest=rules.gca_link_inputs.output.manifest
+        manifest=rules.gca_link_inputs.output.manifest,
+        mag=lambda wildcards: [GCA_MAG_FAA] if GCA_MAG and wildcards.sample == GCA_MAG_SAMPLE else []
     output:
         faa=temp(os.path.join(GCA_DIR, "renamed", "{sample}.faa.gz")),   # deleted once createdb has read it
         n_genes=os.path.join(GCA_DIR, "renamed", "{sample}.count")

@@ -196,7 +196,7 @@ gc_propagate:
 gca_rename:
   partition: "ei-medium"
   mem: "8G"
-  time: "06:00:00"
+  time: "1-00:00:00"   # the combined MAG ORF file is one large input
 
 gca_createdb:
   partition: "ei-medium"
@@ -311,3 +311,8 @@ cs_analyse_clusters:
   partition: "ei-medium"
   mem: "32G"
   time: "06:00:00"
+
+gca_mag_orfs:
+  partition: "ei-medium"
+  mem: "8G"
+  time: "1-00:00:00"   # reads 42,487 MAG ORF files

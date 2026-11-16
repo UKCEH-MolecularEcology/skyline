@@ -269,6 +269,10 @@ gene_catalogue:
 # Every key not given here is taken from 'gene_catalogue' above. Outputs: <annotations>/gene_catalogue_all_genes/
 gene_catalogue_all_genes:
   min_length: 0
+  catalogue_dir: "gene_catalogue_all_genes_v2"   # rebuild incl. hifi_individual_b20_d3_1400_bio + MAG ORFs (v1: gene_catalogue_all_genes)
+  mag_orfs:                                       # per-MAG Prodigal ORFs (genes called only at MAG level); unset = assemblies only
+    dir: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/CEHsoil/MAG_collection/MQ_MAGs_all_prodigal"
+    sample: "mag_MQ_MAGs_all"
   propagate_memory: "800GB"     # DuckDB limit; job gets 1000G on ei-largemem
   mmseqs_bin: "/ei/.project-scratch/5/542de014-1e71-4955-945a-5d2ab09567a7/data/Databases/mmseqs_64bit/mmseqs/bin/mmseqs"   # from mmseqs-linux-avx2-64bit.tar.gz
 
