@@ -99,6 +99,7 @@ localrules: gene_catalogue_all_genes_all, gca_link_inputs, gca_summary
 ###################
 rule gene_catalogue_all_genes_all:
     input:
+        os.path.join(GCA_DIR, "clusters", "cluster_sources.txt"),
         os.path.join(GCA_DIR, "clusters", "summary.tsv"),
         expand(os.path.join(GCA_DIR, "annotation", str(GCA_ANNOT), "{tool}_genes.tsv"), tool=GCA_TOOLS),
         expand(os.path.join(GCA_DIR, "annotation", "{level}", "{tool}_reps.tsv.gz"), level=GCA_PROP, tool=GCA_TOOLS)
@@ -500,5 +501,31 @@ rule gca_propagate:
         "python {params.script} --level {wildcards.level} --annot-level " + str(GCA_ANNOT) + " "
         "--levels {params.levels} --clusters-dir {params.clusters_dir} --annot-dir {params.annot_dir} "
         "--tools {params.tools} --out-dir {params.out_dir} --tmp {params.tmp} "
+        "--threads {threads} --memory {params.memory} && date) &> >(tee {log})"
+
+
+################### clusters per level by source of their genes (short-read / long-read / shared / MAG ORFs only)
+rule gca_source_summary:
+    input:
+        expand(os.path.join(GCA_DIR, "clusters", "clusters_{level}.tsv.gz"), level=GCA_LEVELS)
+    output:
+        os.path.join(GCA_DIR, "clusters", "cluster_sources.txt")
+    log:
+        os.path.join(ANNOT_RESULTS_DIR, "logs", "gene_catalogue_all_genes", "cluster_sources.log")
+    params:
+        src=os.path.join(SRC_DIR, "gc_source_summary.py"),
+        levels=",".join(str(l) for l in GCA_LEVELS),
+        clusters_dir=os.path.join(GCA_DIR, "clusters"),
+        memory=GCA.get("propagate_memory", "300GB"),
+        tmp=os.path.join(GCA.get("local_tmpdir", "/tmp"), "{}_gca_sources".format(os.environ.get("USER", "user")))
+    threads:
+        GCA.get("propagate_threads", 32)
+    conda:
+        os.path.join(ENV_DIR, "duckdb.yaml")
+    message:
+        "Gene catalogue (all genes): clusters per level by source (SR / LR / shared / MAG ORFs)"
+    shell:
+        "(trap 'rm -rf {params.tmp}' EXIT; date && python {params.src} --levels {params.levels} "
+        "--clusters-dir {params.clusters_dir} --out {output} --tmp {params.tmp} "
         "--threads {threads} --memory {params.memory} && date) &> >(tee {log})"
 

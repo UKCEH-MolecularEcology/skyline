@@ -316,3 +316,8 @@ gca_mag_orfs:
   partition: "ei-medium"
   mem: "8G"
   time: "1-00:00:00"   # reads 42,487 MAG ORF files
+
+gca_source_summary:
+  partition: "ei-largemem"
+  mem: "1000G"         # DuckDB limited to propagate_memory; reads clusters_100 (one row per gene, ~4.6 billion)
+  time: "2-00:00:00"
